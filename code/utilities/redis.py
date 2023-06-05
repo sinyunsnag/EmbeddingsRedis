@@ -1,3 +1,4 @@
+import ast
 import json
 import logging
 import uuid
@@ -31,6 +32,13 @@ class RedisExtended(Redis):
         except: 
             # Create Redis Index
             self.create_prompt_index()
+
+        # Check if index exists
+        try:
+            self.client.ft("synonym-index").info()
+        except: 
+            # Create Synonym Index
+            self.create_synonym_index()
 
         try:
             self.client.ft(self.index_name).info()
@@ -105,3 +113,41 @@ class RedisExtended(Redis):
 
     def delete_prompt_results(self, prefix="prompt*"):
         self.delete_keys_pattern(pattern=prefix)
+
+
+    # synonym management
+    def create_synonym_index(self, index_name="synonym-index", prefix = "synonym"):
+        writer = TextField(name="writer")
+        regdate = TextField(name="regdate")
+        title = TextField(name="title")
+        synonymList = TextField(name="synonymList")
+        # Create index
+        self.client.ft(index_name).create_index(
+            fields = [writer, regdate, title, synonymList],
+            definition = IndexDefinition(prefix=[prefix], index_type=IndexType.HASH)
+        )
+
+    def add_synonym_result(self, id, writer="", regdate="", title="", synonymList=""):
+        self.client.hset(
+            f"synonym:{id}",
+            mapping={
+                "writer": writer,
+                "regdate": regdate,
+                "title": title,
+                "synonymList":str(synonymList)
+            }
+        )
+
+    def get_synonym_results(self, prompt_index_name="synonym-index", number_of_results: int=3155):
+        base_query = f'*'
+        return_fields = ['id','writer','regdate','title', 'synonymList']
+        query = Query(base_query)\
+            .paging(0, number_of_results)\
+            .return_fields(*return_fields)\
+            .dialect(2)
+
+        results = self.client.ft(prompt_index_name).search(query)
+        if results.docs:
+            return pd.DataFrame(list(map(lambda x: {'id' : x.id, 'writer': x.writer, 'regdate': x.regdate, 'title': x.title, 'synonymList': ast.literal_eval(x.synonymList)}, results.docs))).sort_values(by='id')
+        else:
+            return pd.DataFrame()
