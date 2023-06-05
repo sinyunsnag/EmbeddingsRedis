@@ -1,15 +1,22 @@
+import re
 import streamlit as st
 from streamlit_chat import message
 from utilities.helper import LLMHelper
 
 def clear_text_input():
-    st.session_state['question'] = st.session_state['input']
+    st.session_state['question'] = chage_synonym(st.session_state['input'])
     st.session_state['input'] = ""
 
 def clear_chat_data():
     st.session_state['input'] = ""
     st.session_state['chat_history'] = []
-    st.session_state['source_documents'] = []
+    st.session_state['source_documents'] = []    
+
+def chage_synonym(question):
+    for idx, row in synonym_df.iterrows():
+        question = re.sub("|".join(row.synonymList), row.title, question)
+    return question   
+
 
 # Initialize chat history
 if 'question' not in st.session_state:
@@ -21,9 +28,8 @@ if 'source_documents' not in st.session_state:
 
 llm_helper = LLMHelper()
 
+# load synonym data
 synonym_df = llm_helper.vector_store.get_synonym_results()
-st.text(synonym_df)
-
 
 # Chat 
 st.text_input("You: ", placeholder="type your question", key="input", on_change=clear_text_input)
