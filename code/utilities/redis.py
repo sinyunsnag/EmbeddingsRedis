@@ -35,7 +35,7 @@ class RedisExtended(Redis):
 
         # Check if index exists
         try:
-            self.client.ft("prompt-index").info()
+            self.client.ft("synonym-index").info()
         except: 
             # Create Synonym Index
             self.create_synonym_index()
