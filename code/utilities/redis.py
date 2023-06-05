@@ -33,7 +33,6 @@ class RedisExtended(Redis):
             # Create Redis Index
             self.create_prompt_index()
 
-            
         # Check if index exists
         try:
             self.client.ft("prompt-index").info()
@@ -106,7 +105,7 @@ class RedisExtended(Redis):
             .paging(0, number_of_results)\
             .return_fields(*return_fields)\
             .dialect(2)
-        results = self.client.ft("synonym").search(query)
+        results = self.client.ft(prompt_index_name).search(query)
         if results.docs:
             return pd.DataFrame(list(map(lambda x: {'id' : x.id, 'filename': x.filename, 'prompt': x.prompt, 'result': x.result.replace('\n',' ').replace('\r',' '),}, results.docs))).sort_values(by='id')
         else:
@@ -116,8 +115,7 @@ class RedisExtended(Redis):
         self.delete_keys_pattern(pattern=prefix)
 
 
-
-    # Junho management
+    # synonym management
     def create_synonym_index(self, index_name="synonym-index", prefix = "synonym"):
         writer = TextField(name="writer")
         regdate = TextField(name="regdate")

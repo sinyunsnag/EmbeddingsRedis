@@ -38,7 +38,7 @@ try:
     else:
         st.dataframe(data, use_container_width=True)
 
-        st.download_button("Download data junh qweo", data.to_csv(index=False).encode('utf-8'), "embeddings.csv", "text/csv", key='download-embeddings')
+        st.download_button("Download data", data.to_csv(index=False).encode('utf-8'), "embeddings.csv", "text/csv", key='download-embeddings')
 
         st.text("")
         st.text("")
@@ -60,9 +60,12 @@ try:
         st.text("")
         st.button("Delete all embeddings", on_click=delete_all, type="secondary")
 
+<<<<<<< HEAD
         st.text("")
         st.text("TEST")
         
 
+=======
+>>>>>>> ed2468e80ad53665a06a5097ed0facc433800987
 except Exception as e:
     st.error(traceback.format_exc())
