@@ -64,6 +64,7 @@ class RedisExtended(Redis):
     def create_index(self, prefix = "doc", distance_metric:str="COSINE"):
         content = TextField(name="content")
         metadata = TextField(name="metadata")
+        year = TextField(name="year")
         content_vector = VectorField("content_vector",
                     "HNSW", {
                         "TYPE": "FLOAT32",
@@ -73,9 +74,78 @@ class RedisExtended(Redis):
                     })
         # Create index
         self.client.ft(self.index_name).create_index(
-            fields = [content, metadata, content_vector],
+            fields = [content, year, metadata, content_vector],
             definition = IndexDefinition(prefix=[prefix], index_type=IndexType.HASH)
         )
+
+    def add_texts(
+        self,
+        texts: Iterable[str],
+        metadatas: Optional[List[dict]] = None,
+        embeddings: Optional[List[List[float]]] = None,
+        keys: Optional[List[str]] = None,
+        batch_size: int = 1000,
+        **kwargs: Any,
+    ) -> List[str]:
+        """Add more texts to the vectorstore.
+
+        Args:
+            texts (Iterable[str]): Iterable of strings/text to add to the vectorstore.
+            metadatas (Optional[List[dict]], optional): Optional list of metadatas.
+                Defaults to None.
+            embeddings (Optional[List[List[float]]], optional): Optional pre-generated
+                embeddings. Defaults to None.
+            keys (Optional[List[str]], optional): Optional key values to use as ids.
+                Defaults to None.
+            batch_size (int, optional): Batch size to use for writes. Defaults to 1000.
+
+        Returns:
+            List[str]: List of ids added to the vectorstore
+        """
+        import numpy as np
+
+        def _redis_key(prefix: str) -> str:
+            """Redis key schema for a given prefix."""
+            return f"{prefix}:{uuid.uuid4().hex}"
+
+        def _redis_prefix(index_name: str) -> str:
+            """Redis key prefix for a given index."""
+            return f"doc:{index_name}"
+
+        content_key = "content"
+        metadata_key = "metadata"
+        vector_key = "content_vector"
+        year_key = "year"
+
+        ids = []
+        prefix = _redis_prefix(self.index_name)
+
+        # Write data to redis
+        pipeline = self.client.pipeline(transaction=False)
+        for i, text in enumerate(texts):
+            # Use provided values by default or fallback
+            key = keys[i] if keys else _redis_key(prefix)
+            metadata = metadatas[i] if metadatas else {}
+            year = metadata.get("year", "")
+            embedding = embeddings[i] if embeddings else self.embedding_function(text)
+            pipeline.hset(
+                key,
+                mapping={
+                    content_key: text,
+                    year_key: year,
+                    vector_key: np.array(embedding, dtype=np.float32).tobytes(),
+                    metadata_key: json.dumps(metadata),
+                },
+            )
+            ids.append(key)
+
+            # Write batch
+            if i % batch_size == 0:
+                pipeline.execute()
+
+        # Cleanup final batch
+        pipeline.execute()
+        return ids
 
     # Prompt management
     def create_prompt_index(self, index_name="prompt-index", prefix = "prompt"):
