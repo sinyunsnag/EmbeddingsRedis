@@ -14,6 +14,13 @@ llm_helper.vector_store.add_synonym_result(
     synonymList=["command test", "커맨드 태스트"]
 )
 
-print(llm_helper.vector_store.get_synonym_results())
+synonym_df = llm_helper.vector_store.get_synonym_results()
+
+import re
+sent = "안녕 command test 호호"
+for idx, row in synonym_df.iterrows():
+    sent = re.sub("|".join(row.synonymList), row.title, sent)
+
+print(sent)
 
 

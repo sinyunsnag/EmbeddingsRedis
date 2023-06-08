@@ -111,7 +111,6 @@ class LLMHelper:
     def add_embeddings_lc(self, source_url):
         try:
             documents = self.document_loaders(source_url).load()
-            
             # Convert to UTF-8 encoding for non-ascii text
             for(document) in documents:
                 try:
@@ -128,16 +127,17 @@ class LLMHelper:
                 doc.page_content = re.sub(pattern, '', doc.page_content)
                 if doc.page_content == '':
                     docs.remove(doc)
-            
+
             keys = []
             for i, doc in enumerate(docs):
                 # Create a unique key for the document
                 source_url = source_url.split('?')[0]
                 filename = "/".join(source_url.split('/')[4:])
+                year = filename.split("/")[-1][:4] # filename이 pdf는 "converted/{filename}", txt는 "{filename}"
                 hash_key = hashlib.sha1(f"{source_url}_{i}".encode('utf-8')).hexdigest()
                 hash_key = f"doc:{self.index_name}:{hash_key}"
                 keys.append(hash_key)
-                doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "chunk": i, "key": hash_key, "filename": filename}
+                doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "chunk": i, "key": hash_key, "filename": filename, "year": year}
             if self.vector_store_type == 'AzureSearch':
                 self.vector_store.add_documents(documents=docs, keys=keys)
             else:
@@ -167,9 +167,11 @@ class LLMHelper:
 
     def get_all_documents(self, k: int = None):
         result = self.vector_store.similarity_search(query="*", k= k if k else self.k)
+
         return pd.DataFrame(list(map(lambda x: {
                 'key': x.metadata['key'],
                 'filename': x.metadata['filename'],
+                'year': x.metadata['year'],
                 'source': urllib.parse.unquote(x.metadata['source']), 
                 'content': x.page_content, 
                 'metadata' : x.metadata,

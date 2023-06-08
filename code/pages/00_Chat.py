@@ -39,7 +39,6 @@ if st.session_state['question']:
     question, result, _, sources = llm_helper.get_semantic_answer_lang_chain(st.session_state['question'], st.session_state['chat_history'])
     st.session_state['chat_history'].append((question, result))
     st.session_state['source_documents'].append(sources)
-
 if st.session_state['chat_history']:
     for i in range(len(st.session_state['chat_history'])-1, -1, -1):
         message(st.session_state['chat_history'][i][1], key=str(i))
