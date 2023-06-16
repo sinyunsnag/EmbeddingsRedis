@@ -34,6 +34,8 @@ import urllib
 
 from fake_useragent import UserAgent
 
+# test : batchfunc에 넣기 위해 소스코드 수정 및 branch 생성..
+
 class LLMHelper:
     def __init__(self,
         document_loaders : BaseLoader = None, 
