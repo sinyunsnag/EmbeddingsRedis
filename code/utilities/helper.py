@@ -133,11 +133,15 @@ class LLMHelper:
                 # Create a unique key for the document
                 source_url = source_url.split('?')[0]
                 filename = "/".join(source_url.split('/')[4:])
-                year = filename.split("/")[-1][:4] # filename이 pdf는 "converted/{filename}", txt는 "{filename}"
+                # converted/{filename}.pdf.txt 
+                
+                insurance = filename.split("/")[-1].split(".")[0].split("_")[0]
+                date = filename.split("/")[-1].split(".")[0].split("_")[1]
+
                 hash_key = hashlib.sha1(f"{source_url}_{i}".encode('utf-8')).hexdigest()
-                hash_key = f"doc:{self.index_name}:{hash_key}"
+                hash_key = f"doc:{self.index_name}:{insurance}:{date}:{hash_key}"
                 keys.append(hash_key)
-                doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "chunk": i, "key": hash_key, "filename": filename, "year": year}
+                doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "chunk": i, "key": hash_key, "filename": filename, "insurance": insurance, "date": date}
             if self.vector_store_type == 'AzureSearch':
                 self.vector_store.add_documents(documents=docs, keys=keys)
             else:
@@ -170,8 +174,9 @@ class LLMHelper:
 
         return pd.DataFrame(list(map(lambda x: {
                 'key': x.metadata['key'],
+                'insurance': x.metadata['insurance'],
+                'date': x.metadata['date'],
                 'filename': x.metadata['filename'],
-                'year': x.metadata['year'],
                 'source': urllib.parse.unquote(x.metadata['source']), 
                 'content': x.page_content, 
                 'metadata' : x.metadata,

@@ -64,7 +64,6 @@ class RedisExtended(Redis):
     def create_index(self, prefix = "doc", distance_metric:str="COSINE"):
         content = TextField(name="content")
         metadata = TextField(name="metadata")
-        year = TextField(name="year")
         content_vector = VectorField("content_vector",
                     "HNSW", {
                         "TYPE": "FLOAT32",
@@ -74,7 +73,7 @@ class RedisExtended(Redis):
                     })
         # Create index
         self.client.ft(self.index_name).create_index(
-            fields = [content, year, metadata, content_vector],
+            fields = [content, metadata, content_vector],
             definition = IndexDefinition(prefix=[prefix], index_type=IndexType.HASH)
         )
 
@@ -115,7 +114,8 @@ class RedisExtended(Redis):
         content_key = "content"
         metadata_key = "metadata"
         vector_key = "content_vector"
-        year_key = "year"
+        insurance_key = "insurance"
+        date_key = "date"
 
         ids = []
         prefix = _redis_prefix(self.index_name)
@@ -126,13 +126,16 @@ class RedisExtended(Redis):
             # Use provided values by default or fallback
             key = keys[i] if keys else _redis_key(prefix)
             metadata = metadatas[i] if metadatas else {}
-            year = metadata.get("year", "")
+            insurance = metadata.get("insurance", "")
+            date = metadata.get("date", "")
+            
             embedding = embeddings[i] if embeddings else self.embedding_function(text)
             pipeline.hset(
                 key,
                 mapping={
                     content_key: text,
-                    year_key: year,
+                    insurance_key: insurance,
+                    date_key: date,
                     vector_key: np.array(embedding, dtype=np.float32).tobytes(),
                     metadata_key: json.dumps(metadata),
                 },
