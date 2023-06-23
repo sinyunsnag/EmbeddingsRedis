@@ -2,6 +2,7 @@ import ast
 import json
 import logging
 import uuid
+import hashlib
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Tuple
 
 from langchain.vectorstores.redis import Redis
@@ -9,6 +10,7 @@ from langchain.docstore.document import Document
 from langchain.embeddings.base import Embeddings
 from langchain.vectorstores.base import VectorStore
 
+import numpy as np
 import pandas as pd
 from redis.commands.search.query import Query
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
@@ -39,6 +41,12 @@ class RedisExtended(Redis):
         except: 
             # Create Synonym Index
             self.create_synonym_index()
+
+        try:
+            self.client.ft("insurance-index").info()
+        except:
+            # Create insurance Index
+            self.create_insurance_index()
 
         try:
             self.client.ft(self.index_name).info()
@@ -76,6 +84,22 @@ class RedisExtended(Redis):
             fields = [content, metadata, content_vector],
             definition = IndexDefinition(prefix=[prefix], index_type=IndexType.HASH)
         )
+
+    def get_index_results(self, prompt_index_name="prompt-index", number_of_results: int=3155):        
+
+        base_query = f"f6707e308f4e88764ed7404a2a42964e80a8d01c"
+        return_fields = ['insurance','date','content','metadata','content_vector']
+        query = Query(base_query)\
+            .paging(0, number_of_results)\
+            .return_fields(*return_fields)\
+            .dialect(2)
+
+        # doc:embeddings:1f73d05ae20e00db294ec675b6f01f75be2fb855:20210331:217b2ffdcedbf80567253a8bddb2c5785457a722
+        results = self.client.ft(self.index_name).search(query)
+        # print(results)
+        # results = self.client.ft("synonym-index").search("")
+        # print(results)
+        print(results.docs[0], len(results.docs))
 
     def add_texts(
         self,
@@ -149,6 +173,7 @@ class RedisExtended(Redis):
         # Cleanup final batch
         pipeline.execute()
         return ids
+
 
     # Prompt management
     def create_prompt_index(self, index_name="prompt-index", prefix = "prompt"):
@@ -224,3 +249,110 @@ class RedisExtended(Redis):
             return pd.DataFrame(list(map(lambda x: {'id' : x.id, 'writer': x.writer, 'regdate': x.regdate, 'title': x.title, 'synonymList': ast.literal_eval(x.synonymList)}, results.docs))).sort_values(by='id')
         else:
             return pd.DataFrame()
+
+
+    # insurance management
+    def add_insurance_info(
+        self,
+        insurance: str,
+        date: str,
+    ):
+        # Write data to redis
+        pipeline = self.client.pipeline(transaction=False)
+        embed_insurance = self.embedding_function(insurance)
+        
+        insurance_key = "insurance"
+        date_key = "date"
+        vector_key = "content_vector"
+
+        insurance_hash_key = hashlib.sha1(insurance.encode('utf-8')).hexdigest()
+
+        key = f"insurance:{insurance_hash_key}:{date}"
+        pipeline.hset(
+            key,
+            mapping={
+                insurance_key: insurance,
+                date_key: date,
+                vector_key: np.array(embed_insurance, dtype=np.float32).tobytes(),
+            },
+        )
+
+        # Cleanup final batch
+        pipeline.execute()
+
+
+    def create_insurance_index(self, index_name="insurance-index", prefix = "insurance", distance_metric:str="COSINE"):
+        insurance = TextField(name="insurance")
+        date = TextField(name="date")
+        content_vector = VectorField("content_vector",
+                    "HNSW", {
+                        "TYPE": "FLOAT32",
+                        "DIM": 1536,
+                        "DISTANCE_METRIC": distance_metric,
+                        "INITIAL_CAP": 1000,
+                    })
+
+        # Create index
+        self.client.ft(index_name).create_index(
+            fields = [insurance, date, content_vector],
+            definition = IndexDefinition(prefix=[prefix], index_type=IndexType.HASH)
+        )
+
+    def get_insurance_info(self, prompt_index_name="insurance-index", number_of_results: int=3155):
+        base_query = f'*'
+        return_fields = ['id','insurance','date','content_vector']
+        query = Query(base_query)\
+            .paging(0, number_of_results)\
+            .return_fields(*return_fields)\
+            .dialect(2)
+
+        results = self.client.ft(prompt_index_name).search(query)
+        
+        if results.docs:
+            return pd.DataFrame(list(map(lambda x: {'id' : x.id, 'insurance': x.insurance, 'date': x.date, 'content_vector': x.content_vector}, results.docs))).sort_values(by='id')
+        else:
+            return pd.DataFrame()
+
+    
+    
+    def similarity_search_with_score_insurance(
+        self, query: str, hash_key: str, index_name: str = "insurance-index", k: int = 4
+    ) -> List[Tuple[str, float]]:
+        """
+        보험 명을 입력받았을 때, redis db 안에 있는 가장 유사한 보험명 리턴
+        """
+        
+        try:
+            from redis.commands.search.query import Query
+        except ImportError:
+            raise ValueError(
+                "Could not import redis python package. "
+                "Please install it with `pip install redis`."
+            )
+
+        # Creates embedding vector from user query
+        embedding = self.embedding_function(query)
+
+        # Prepare the Query
+        return_fields = ["insurance", "date", "vector_score"]
+        vector_field = "content_vector"
+        hybrid_fields = hash_key
+        base_query = (
+            f"{hybrid_fields}=>[KNN {k} @{vector_field} $vector AS vector_score]"
+        )
+        redis_query = (
+            Query(base_query)
+            .return_fields(*return_fields)
+            .sort_by("vector_score")
+            .paging(0, k)
+            .dialect(2)
+        )
+        params_dict: Mapping[str, str] = {
+            "vector": np.array(embedding)  # type: ignore
+            .astype(dtype=np.float32)
+            .tobytes()
+        }
+
+        # perform vector search
+        results = self.client.ft(index_name).search(redis_query, params_dict)
+        return results

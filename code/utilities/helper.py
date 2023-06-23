@@ -121,6 +121,7 @@ class LLMHelper:
                 
             docs = self.text_splitter.split_documents(documents)
             
+            
             # Remove half non-ascii character from start/end of doc content (langchain TokenTextSplitter may split a non-ascii character in half)
             pattern = re.compile(r'[\x00-\x1f\x7f\u0080-\u00a0\u2000-\u3000\ufff0-\uffff]')
             for(doc) in docs:
@@ -128,18 +129,23 @@ class LLMHelper:
                 if doc.page_content == '':
                     docs.remove(doc)
 
+            
+            # Create a unique key for the document
+            source_url = source_url.split('?')[0]
+            filename = "/".join(source_url.split('/')[4:])
+            # converted/{filename}.pdf.txt 
+            
+            insurance = filename.split("/")[-1].split(".")[0].split("_")[0]
+            date = filename.split("/")[-1].split(".")[0].split("_")[1]
+
+            insurance_date = insurance + ":" + date
+            insurance_date_hash_key = hashlib.sha1(insurance_date.encode('utf-8')).hexdigest()
+            self.vector_store.add_insurance_info(insurance, date)
+            
             keys = []
             for i, doc in enumerate(docs):
-                # Create a unique key for the document
-                source_url = source_url.split('?')[0]
-                filename = "/".join(source_url.split('/')[4:])
-                # converted/{filename}.pdf.txt 
-                
-                insurance = filename.split("/")[-1].split(".")[0].split("_")[0]
-                date = filename.split("/")[-1].split(".")[0].split("_")[1]
-
-                hash_key = hashlib.sha1(f"{source_url}_{i}".encode('utf-8')).hexdigest()
-                hash_key = f"doc:{self.index_name}:{insurance}:{date}:{hash_key}"
+                # hash_key = hashlib.sha1(f"{source_url}_{i}".encode('utf-8')).hexdigest()
+                hash_key = f"doc:{self.index_name}:{insurance_date_hash_key}:{i}"
                 keys.append(hash_key)
                 doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "chunk": i, "key": hash_key, "filename": filename, "insurance": insurance, "date": date}
             if self.vector_store_type == 'AzureSearch':
@@ -182,7 +188,7 @@ class LLMHelper:
                 'metadata' : x.metadata,
                 }, result)))
 
-    def get_semantic_answer_lang_chain(self, question, chat_history):
+    def get_semantic_answer_lang_chain(self, question, chat_history, hash_key):
         question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
         doc_chain = load_qa_with_sources_chain(self.llm, chain_type="stuff", verbose=True, prompt=self.prompt)
         chain = ConversationalRetrievalChain(
@@ -192,7 +198,8 @@ class LLMHelper:
             return_source_documents=True,
             # top_k_docs_for_context= self.k
         )
-        result = chain({"question": question, "chat_history": chat_history})
+        result = chain({"question": question, "chat_history": chat_history, "hash_key": hash_key})
+        
         context = "\n".join(list(map(lambda x: x.page_content, result['source_documents'])))
         sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
 
