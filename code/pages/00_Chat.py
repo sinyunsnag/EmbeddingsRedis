@@ -13,9 +13,10 @@ def clear_chat_data():
     st.session_state['source_documents'] = []    
 
 def chage_synonym(question):
-    for idx, row in synonym_df.iterrows():
-        question = re.sub("|".join(row.synonymList), row.title, question)
-    return question   
+    return question
+    # for idx, row in synonym_df.iterrows():
+    #     question = re.sub("|".join(row.synonymList), row.title, question)
+    # return question   
 
 
 # Initialize chat history
@@ -30,8 +31,8 @@ llm_helper = LLMHelper()
 
 # load synonym data
 synonym_df = llm_helper.vector_store.get_synonym_results()
-
-# Chat 
+st.text(synonym_df)
+# Chat
 st.text_input("You: ", placeholder="type your question", key="input", on_change=clear_text_input)
 clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
 

@@ -3,6 +3,7 @@ from langchain.prompts import PromptTemplate
 
 template = """{summaries}
 Please reply to the question using only the information present in the text above. 
+Based on the text above, speak as grammatically as possible like a call center employee
 Include references to the sources you used to create the answer if those are relevant ("SOURCES"). 
 If you can't find it, reply politely that the information is not in the knowledge base.
 Question: {question}
@@ -14,5 +15,3 @@ EXAMPLE_PROMPT = PromptTemplate(
     template="Content: {page_content}\nSource: {source}",
     input_variables=["page_content", "source"],
 )
-
-
