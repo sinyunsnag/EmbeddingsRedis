@@ -13,12 +13,14 @@ llm_helper = LLMHelper()
 
 import ast
 from datetime import datetime
+from urllib.parse import quote, unquote
 
-insurance_name = 'junho'
+insurance_name = '실손보험'
 date = '199905'
 
-similar_insurance = llm_helper.vector_store.similarity_search_with_score_insurance(insurance_name, "*", index_name="insurance-index", k=4)
+similar_insurance = llm_helper.vector_store.similarity_search_with_score_insurance(quote(insurance_name), "*", index_name="insurance-index", k=4)
 best_insurance = similar_insurance.docs[0]
+
 
 sell_date = []
 date_list = [str(i) for i in ast.literal_eval(best_insurance.date)]
@@ -38,11 +40,15 @@ for start, end in sell_date:
 if date_key is None:
     date_key = sell_date[-1][0]
 
+print("입력된 보험 : ", insurance_name)
+
+print("가장 유사한 보험 : ", unquote(best_insurance.insurance))
+
 print("key : ", date_key)
 
 print("팔던 날짜 : ", sell_date)
 
-candidate_insurance = [ins.insurance for ins in similar_insurance.docs[1:]]
+candidate_insurance = [unquote(ins.insurance) for ins in similar_insurance.docs[1:]]
 
 print("유사한 보험 : ", candidate_insurance)
 
