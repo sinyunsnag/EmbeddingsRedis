@@ -6,17 +6,17 @@ from collections import defaultdict
 llm_helper = LLMHelper()
 
 
-
-
-# llm_helper.vector_store.add_insurance_info("junho", "201204")
+# 11111111111111111111111111111111111111111111
+# 보험명 들어오면, 가장 유사한 보험명 뽑아내고?? 년도는?
 
 
 import ast
+import hashlib
 from datetime import datetime
 from urllib.parse import quote, unquote
 
 insurance_name = '실손보험'
-date = '199905'
+insurance_date = '199905'
 
 similar_insurance = llm_helper.vector_store.similarity_search_with_score_insurance(quote(insurance_name), "*", index_name="insurance-index", k=4)
 best_insurance = similar_insurance.docs[0]
@@ -33,7 +33,7 @@ for idx in range(1, len(date_list)):
 
 date_key = None
 for start, end in sell_date:
-    if start <= date < end:
+    if start <= insurance_date < end:
         print(start + " ~ " + end)
         date_key = start
 
@@ -42,9 +42,12 @@ if date_key is None:
 
 print("입력된 보험 : ", insurance_name)
 
-print("가장 유사한 보험 : ", unquote(best_insurance.insurance))
+insurance_key = unquote(best_insurance.insurance)
+print("가장 유사한 보험 : ", insurance_key)
 
-print("key : ", date_key)
+print("date_key : ", date_key)
+
+
 
 print("팔던 날짜 : ", sell_date)
 
@@ -52,26 +55,20 @@ candidate_insurance = [unquote(ins.insurance) for ins in similar_insurance.docs[
 
 print("유사한 보험 : ", candidate_insurance)
 
+
+
+print("찾기 시작.")
+key = insurance_key + ":" + date_key
+print("key : ", key)
+hash_key = hashlib.sha1(key.encode('utf-8')).hexdigest()
+print("hash key : ", hash_key)
+res = llm_helper.get_semantic_answer_lang_chain("돈 얼마야", "", hash_key)
+
+print(res)
+
+exit()
 exit()
 
-# 11111111111111111111111111111111111111111111
-# 보험명 들어오면, 가장 유사한 보험명 뽑아내고?? 년도는?
-
-
-# insurance:8546e2663fa3cd3f0e0ddf2c30de19a0be538470:20210331
-insurance_name = '(무)교보실손의료비보험(갱신형)3'
-similar_insurance = llm_helper.vector_store.similarity_search_with_score_insurance(insurance_name, "*", index_name="insurance-index", k=10)
-
-
-insurance_dict = defaultdict(list)
-
-for insurance in similar_insurance.docs:
-    insurance.id
-    print(insurance.insurance)
-    insurance_dict[insurance.insurance].append(insurance.date)
-
-print(insurance_dict)
-exit()
 
 # 2222222222222222222222222222222222222222
 # 질문 들어오면, 임베딩 벡터들과 비교해 4개의 본문 찾아내는 부분.

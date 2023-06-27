@@ -5,10 +5,12 @@ import uuid
 import hashlib
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Tuple
 
-from langchain.vectorstores.redis import Redis
+from langchain.vectorstores.redis import Redis, RedisVectorStoreRetriever
 from langchain.docstore.document import Document
 from langchain.embeddings.base import Embeddings
 from langchain.vectorstores.base import VectorStore
+from langchain.schema import BaseRetriever
+
 
 import numpy as np
 import pandas as pd
@@ -365,3 +367,102 @@ class RedisExtended(Redis):
         # perform vector search
         results = self.client.ft(index_name).search(redis_query, params_dict)
         return results
+
+
+    def as_retriever(self, **kwargs: Any) -> BaseRetriever:
+        return KyoboRedisVectorStoreRetriever(vectorstore=self, **kwargs)
+
+
+    def similarity_search(
+        self, query: str, hash_key:str, k: int = 4, **kwargs: Any
+    ) -> List[Document]:
+        """
+        Returns the most similar indexed documents to the query text.
+
+        Args:
+            query (str): The query text for which to find similar documents.
+            k (int): The number of documents to return. Default is 4.
+
+        Returns:
+            List[Document]: A list of documents that are most similar to the query text.
+        """
+        docs_and_scores = self.similarity_search_with_score(query, hash_key, k=k)
+        return [doc for doc, _ in docs_and_scores]
+
+    def similarity_search_with_score(
+        self, query: str, hash_key:str, k: int = 4
+    ) -> List[Tuple[Document, float]]:
+        """Return docs most similar to query.
+
+        Args:
+            query: Text to look up documents similar to.
+            k: Number of Documents to return. Defaults to 4.
+
+        Returns:
+            List of Documents most similar to the query and score for each
+        """
+        try:
+            from redis.commands.search.query import Query
+        except ImportError:
+            raise ValueError(
+                "Could not import redis python package. "
+                "Please install it with `pip install redis`."
+            )
+
+        # Creates embedding vector from user query
+        embedding = self.embedding_function(query)
+        k = 1000
+        # Prepare the Query
+        return_fields = ["metadata", "content", "vector_score"]
+        vector_field = "content_vector"
+        hybrid_fields = hash_key
+        base_query = (
+            f"{hybrid_fields}=>[KNN {k} @{vector_field} $vector AS vector_score]"
+        )
+        redis_query = (
+            Query(base_query)
+            .return_fields(*return_fields)
+            .sort_by("vector_score")
+            .paging(0, k)
+            .dialect(2)
+        )
+        params_dict: Mapping[str, str] = {
+            "vector": np.array(embedding)  # type: ignore
+            .astype(dtype=np.float32)
+            .tobytes()
+        }
+
+        # perform vector search
+        results = self.client.ft(self.index_name).search(redis_query, params_dict)
+
+        docs = [
+            (
+                Document(
+                    page_content=result.content, metadata=json.loads(result.metadata)
+                ),
+                float(result.vector_score),
+            )
+            for result in results.docs
+        ]
+        print(hash_key)
+        print("ZZZZZ", len(docs))
+        return docs
+
+
+class KyoboRedisVectorStoreRetriever(RedisVectorStoreRetriever):
+    vectorstore: Redis
+    search_type: str = "similarity"
+    k: int = 4
+    score_threshold: float = 0.4
+
+    def get_relevant_documents(self, query: str, hash_key:str) -> List[Document]:
+        if self.search_type == "similarity":
+            docs = self.vectorstore.similarity_search(query, hash_key, k=self.k)
+        elif self.search_type == "similarity_limit":
+            docs = self.vectorstore.similarity_search_limit_score(
+                query, k=self.k, score_threshold=self.score_threshold
+            )
+        else:
+            raise ValueError(f"search_type of {self.search_type} not allowed.")
+        return docs
+
