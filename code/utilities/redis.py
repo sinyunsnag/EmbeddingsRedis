@@ -258,7 +258,6 @@ class RedisExtended(Redis):
         date: str,
     ):
         # Write data to redis
-        pipeline = self.client.pipeline(transaction=False)
         embed_insurance = self.embedding_function(insurance)
         
         insurance_key = "insurance"
@@ -267,7 +266,20 @@ class RedisExtended(Redis):
 
         insurance_hash_key = hashlib.sha1(insurance.encode('utf-8')).hexdigest()
 
-        key = f"insurance:{insurance_hash_key}:{date}"
+        key = f"insurance:{insurance_hash_key}"
+
+        # 기존 date 가져오기.
+        if self.client.hget(key, date_key):
+            date_list = ast.literal_eval(self.client.hget(key, date_key).decode())
+            if int(date) not in date_list:
+                date_list.append(int(date))
+                date_list.sort()
+            date = str(date_list)
+        else:
+            date = "[" + date + "]"
+
+        pipeline = self.client.pipeline(transaction=False)
+
         pipeline.hset(
             key,
             mapping={
@@ -301,10 +313,7 @@ class RedisExtended(Redis):
     def get_insurance_info(self, prompt_index_name="insurance-index", number_of_results: int=3155):
         base_query = f'*'
         return_fields = ['id','insurance','date','content_vector']
-        query = Query(base_query)\
-            .paging(0, number_of_results)\
-            .return_fields(*return_fields)\
-            .dialect(2)
+        query = Query(base_query)
 
         results = self.client.ft(prompt_index_name).search(query)
         
