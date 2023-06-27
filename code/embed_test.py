@@ -15,7 +15,7 @@ import hashlib
 from datetime import datetime
 from urllib.parse import quote, unquote
 
-insurance_name = '실손보험'
+insurance_name = '보장 생명보험'
 insurance_date = '199905'
 
 similar_insurance = llm_helper.vector_store.similarity_search_with_score_insurance(quote(insurance_name), "*", index_name="insurance-index", k=4)
@@ -58,7 +58,7 @@ print("유사한 보험 : ", candidate_insurance)
 
 
 print("찾기 시작.")
-key = insurance_key + ":" + date_key
+key = quote(insurance_key) + ":" + date_key
 print("key : ", key)
 hash_key = hashlib.sha1(key.encode('utf-8')).hexdigest()
 print("hash key : ", hash_key)

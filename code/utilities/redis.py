@@ -444,9 +444,8 @@ class RedisExtended(Redis):
             )
             for result in results.docs
         ]
-        print(hash_key)
-        print("ZZZZZ", len(docs))
-        return docs
+        print("테스트 전체 embedding 길이 : ", len(docs))
+        return docs[:4]
 
 
 class KyoboRedisVectorStoreRetriever(RedisVectorStoreRetriever):
