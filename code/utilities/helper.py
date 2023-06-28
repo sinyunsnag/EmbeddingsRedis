@@ -34,6 +34,49 @@ import urllib
 
 from fake_useragent import UserAgent
 
+
+from langchain.docstore.document import Document
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Tuple
+
+class KyoboConversationalRetrievalChain(ConversationalRetrievalChain):
+
+    def _call(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+
+        def _get_chat_history(chat_history: List[Tuple[str, str]]) -> str:
+            buffer = ""
+            for human_s, ai_s in chat_history:
+                human = "Human: " + human_s
+                ai = "Assistant: " + ai_s
+                buffer += "\n" + "\n".join([human, ai])
+            return buffer
+
+        question = inputs["question"]
+        get_chat_history = self.get_chat_history or _get_chat_history
+        chat_history_str = get_chat_history(inputs["chat_history"])
+
+        if chat_history_str:
+            new_question = self.question_generator.run(
+                question=question, chat_history=chat_history_str
+            )
+        else:
+            new_question = question
+            
+        docs = self._get_docs(new_question, inputs)
+        new_inputs = inputs.copy()
+        new_inputs["question"] = new_question
+        new_inputs["chat_history"] = chat_history_str
+        answer, _ = self.combine_docs_chain.combine_docs(docs, **new_inputs)
+        if self.return_source_documents:
+            return {self.output_key: answer, "source_documents": docs}
+        else:
+            return {self.output_key: answer}    
+
+    def _get_docs(self, question: str, inputs: Dict[str, Any]) -> List[Document]:
+        hash_key = inputs['hash_key']
+        docs = self.retriever.get_relevant_documents(question, hash_key)
+        return self._reduce_tokens_below_limit(docs)
+
+
 class LLMHelper:
     def __init__(self,
         document_loaders : BaseLoader = None, 
@@ -121,7 +164,6 @@ class LLMHelper:
                 
             docs = self.text_splitter.split_documents(documents)
             
-            
             # Remove half non-ascii character from start/end of doc content (langchain TokenTextSplitter may split a non-ascii character in half)
             pattern = re.compile(r'[\x00-\x1f\x7f\u0080-\u00a0\u2000-\u3000\ufff0-\uffff]')
             for(doc) in docs:
@@ -135,8 +177,8 @@ class LLMHelper:
             filename = "/".join(source_url.split('/')[4:])
             # converted/{filename}.pdf.txt 
             
-            insurance = filename.split("/")[-1].split(".")[0].split("_")[0]
-            date = filename.split("/")[-1].split(".")[0].split("_")[1]
+            insurance = urllib.parse.unquote(filename.split("/")[-1].split(".")[0].split("_")[0])
+            date = urllib.parse.unquote(filename.split("/")[-1].split(".")[0].split("_")[1])
 
             insurance_date = insurance + ":" + date
             insurance_date_hash_key = hashlib.sha1(insurance_date.encode('utf-8')).hexdigest()
@@ -191,7 +233,7 @@ class LLMHelper:
     def get_semantic_answer_lang_chain(self, question, chat_history, hash_key):
         question_generator = LLMChain(llm=self.llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=False)
         doc_chain = load_qa_with_sources_chain(self.llm, chain_type="stuff", verbose=True, prompt=self.prompt)
-        chain = ConversationalRetrievalChain(
+        chain = KyoboConversationalRetrievalChain(
             retriever=self.vector_store.as_retriever(),
             question_generator=question_generator,
             combine_docs_chain=doc_chain,
@@ -199,7 +241,7 @@ class LLMHelper:
             # top_k_docs_for_context= self.k
         )
         result = chain({"question": question, "chat_history": chat_history, "hash_key": hash_key})
-        
+
         context = "\n".join(list(map(lambda x: x.page_content, result['source_documents'])))
         sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
 
