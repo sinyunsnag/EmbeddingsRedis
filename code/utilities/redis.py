@@ -265,7 +265,8 @@ class RedisExtended(Redis):
         insurance_key = "insurance"
         date_key = "date"
         vector_key = "content_vector"
-
+        logger.info("TTTTTTTTTQQQQQ : ", insurance)
+        logger.info("TT", date)
         insurance_hash_key = hashlib.sha1(insurance.encode('utf-8')).hexdigest()
 
         key = f"insurance:{insurance_hash_key}"

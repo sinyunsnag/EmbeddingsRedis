@@ -6,6 +6,45 @@ from collections import defaultdict
 llm_helper = LLMHelper()
 
 
+
+# 0000000000000000000000000000000000000
+# 여러 text similarity 모델이 있따.
+# 모델 차원이 1000, 1500, 4000 << 비교해봐도 좋을듯.
+
+# from numpy import dot
+# from numpy.linalg import norm
+# import numpy as np
+
+# # 코사인 유사도 함수 
+# def cos_sim(A, B):
+#        return dot(A, B)/(norm(A)*norm(B))
+
+# eng = "text-embedding-ada-002"
+# res = llm_helper.embeddings.client.create(
+#     input = "보장 생명보험",
+#     engine=eng,
+#     # engine="text-similarity-ada-001",
+#     # engine="text-similarity-curie-001",
+# )
+
+# inp = res['data'][0]['embedding']
+
+# db = []
+# for ins in ["(무)생명보험(보장형)3", "(무)실손의료비보험(갱신형)2", "(무)실손의료비보험(보장형)3"]:
+#     res = llm_helper.embeddings.client.create(
+#         input = ins,
+#         engine=eng,
+#         # engine="text-similarity-ada-001",
+#         # engine="text-similarity-curie-001",
+#     )
+
+#     db.append([ins, res['data'][0]['embedding']])
+
+# for ins, vec in db:
+#     similarity = cos_sim(inp, vec)
+#     print(ins, ":", similarity)
+# exit()
+
 # 11111111111111111111111111111111111111111111
 # 보험명 들어오면, 가장 유사한 보험명 뽑아내고?? 년도는?
 
@@ -15,10 +54,10 @@ import hashlib
 from datetime import datetime
 from urllib.parse import quote, unquote
 
-insurance_name = '보장 생명보험'
+insurance_name = '보장성 실손보험'
 insurance_date = '199905'
 
-similar_insurance = llm_helper.vector_store.similarity_search_with_score_insurance(quote(insurance_name), "*", index_name="insurance-index", k=4)
+similar_insurance = llm_helper.vector_store.similarity_search_with_score_insurance(insurance_name, "*", index_name="insurance-index", k=4)
 best_insurance = similar_insurance.docs[0]
 
 

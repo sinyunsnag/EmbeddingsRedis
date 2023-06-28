@@ -177,8 +177,8 @@ class LLMHelper:
             filename = "/".join(source_url.split('/')[4:])
             # converted/{filename}.pdf.txt 
             
-            insurance = filename.split("/")[-1].split(".")[0].split("_")[0]
-            date = filename.split("/")[-1].split(".")[0].split("_")[1]
+            insurance = urllib.parse.unquote(filename.split("/")[-1].split(".")[0].split("_")[0])
+            date = urllib.parse.unquote(filename.split("/")[-1].split(".")[0].split("_")[1])
 
             insurance_date = insurance + ":" + date
             insurance_date_hash_key = hashlib.sha1(insurance_date.encode('utf-8')).hexdigest()
@@ -189,7 +189,7 @@ class LLMHelper:
                 # hash_key = hashlib.sha1(f"{source_url}_{i}".encode('utf-8')).hexdigest()
                 hash_key = f"doc:{self.index_name}:{insurance_date_hash_key}:{i}"
                 keys.append(hash_key)
-                doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "chunk": i, "key": hash_key, "filename": filename, "insurance": urllib.parse.unquote(insurance), "date": date}
+                doc.metadata = {"source": f"[{source_url}]({source_url}_SAS_TOKEN_PLACEHOLDER_)" , "chunk": i, "key": hash_key, "filename": filename, "insurance": insurance, "date": date}
             if self.vector_store_type == 'AzureSearch':
                 self.vector_store.add_documents(documents=docs, keys=keys)
             else:
