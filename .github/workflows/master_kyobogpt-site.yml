@@ -23,8 +23,8 @@ jobs:
       uses: docker/login-action@v2
       with:
         registry: https://kyobogptweb.azurecr.io/
-        username: ${{ secrets.AzureAppService_ContainerUsername_d2a382e4f6ad4855a667f10698565455 }}
-        password: ${{ secrets.AzureAppService_ContainerPassword_a4f9f3e2fa4846c9a655eb0f0d521a0a }}
+        username: kyobogptweb
+        password: t2Ho19Zudyjho6ksYj/a4G5QNK1ROsjlUqIaUaGosr+ACRCOTBUQ
 
     - name: Build and push container image to registry
       uses: docker/build-push-action@v3
