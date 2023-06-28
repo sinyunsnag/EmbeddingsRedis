@@ -22,15 +22,15 @@ jobs:
     - name: Log in to registry
       uses: docker/login-action@v2
       with:
-        registry: https://github.com/sinyunsnag/embeddingsredis/
-        username: ${{ secrets.AzureAppService_ContainerUsername_bda1a1ab74c647f990b1c199126cd5d7 }}
-        password: ${{ secrets.AzureAppService_ContainerPassword_5ef2d9ed3f30483f884282a3d9daaac2 }}
+        registry: https://kyobogptweb.azurecr.io/
+        username: ${{ secrets.AzureAppService_ContainerUsername_d2a382e4f6ad4855a667f10698565455 }}
+        password: ${{ secrets.AzureAppService_ContainerPassword_a4f9f3e2fa4846c9a655eb0f0d521a0a }}
 
     - name: Build and push container image to registry
       uses: docker/build-push-action@v3
       with:
         push: true
-        tags: github.com/sinyunsnag/embeddingsredis/${{ secrets.AzureAppService_ContainerUsername_bda1a1ab74c647f990b1c199126cd5d7 }}/fruocco/oai-embeddings:${{ github.sha }}
+        tags: kyobogptweb.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_d2a382e4f6ad4855a667f10698565455 }}/embeddingsredisweb:${{ github.sha }}
         file: ./Dockerfile
 
   deploy:
@@ -47,5 +47,5 @@ jobs:
       with:
         app-name: 'kyobogpt-site'
         slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_d18240777894454db86717e2eed210f8 }}
-        images: 'github.com/sinyunsnag/embeddingsredis/${{ secrets.AzureAppService_ContainerUsername_bda1a1ab74c647f990b1c199126cd5d7 }}/fruocco/oai-embeddings:${{ github.sha }}'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_137247f83a8b4d0b924af061be0ca597 }}
+        images: 'kyobogptweb.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_d2a382e4f6ad4855a667f10698565455 }}/embeddingsredisweb:${{ github.sha }}'
