@@ -25,7 +25,7 @@ from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from utilities.formrecognizer import AzureFormRecognizerClient
 from utilities.azureblobstorage import AzureBlobStorageClient
 from utilities.translator import AzureTranslatorClient
-from utilities.customprompt import PROMPT
+from utilities.customprompt import PROMPT, EXTRACT_SUB_PROMPT
 from utilities.redis import RedisExtended
 from utilities.azuresearch import AzureSearch
 
@@ -265,3 +265,13 @@ class LLMHelper:
             return self.llm([HumanMessage(content=prompt)]).content
         else:
             return self.llm(prompt)
+    
+    
+    def get_extract_entity(self, question):
+        extract_chain = LLMChain(llm=self.llm, prompt=EXTRACT_SUB_PROMPT, verbose=True)
+        result = extract_chain({"question": question})
+
+        subs_info = result['text'].replace(' ','').split(',')
+        result['answer'] = dict([(subs_info[0].split(':')[0],subs_info[0].split(':')[1]),
+                                 ( subs_info[1].split(':')[0],subs_info[1].split(':')[1]  )   ])
+        return question, result['answer']
