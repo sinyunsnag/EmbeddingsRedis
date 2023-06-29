@@ -4,6 +4,19 @@ from streamlit_chat import message
 from utilities.helper import LLMHelper
 from datetime import datetime
 
+introductory_phrase = """
+안녕하세요. 저는 교보생명의 보험약관을 설명해 드리는 교보 챗GPT입니다. 설명이
+필요하신 보험약관 문의가 있으신가요??
+
+보다 정확한 내용을 파악하기 위해서 궁금하신 보험명을 포함하여 질문해주시고
+보허
+
+"""
+reinformation_phrase = """
+상품명과 가입년도를 알려주세요~
+(예: 1992년도에 가입했고 종신보험이야)
+"""
+
 
 subscription_info = dict()
 def clear_text_input():
@@ -30,19 +43,19 @@ def chage_synonym(question):
 
 # 데이터 유효성 검사
 def chk_subscription_info(subscription_info):
-    if not subscription_info.get('subscriptionName') or len(subscription_info.get('subscriptionName')) < 5 :
+    if not st.session_state['name'] or len(st.session_state['name']) < 5 :
         return False
-    elif not subscription_info.get('subscriptionDate') or subscription_info.get('subscriptionDate') =='none' :
+    elif not st.session_state['date'] or st.session_state['date'] =='none' :
         now = datetime.now()
-        subscription_info['subscriptionDate'] = now.strftime('%Y%m')
+        st.session_state['date'] = now.strftime('%Y%m')
         return True
     # 년도만 있을 경우 1월을 더해줌
-    elif subscription_info.get('subscriptionDate') :
-        if len(subscription_info.get('subscriptionDate')) == 4 :
-            subscription_info['subscriptionDate'] = subscription_info['subscriptionDate'] +'01'
+    elif st.session_state['date'] :
+        if len(st.session_state['date']) == 4 :
+            st.session_state['date'] = st.session_state['date'] +'01'
         try:
-            subscription_info['subscriptionDate'] = re.sub(r'[^0-9]', '',  subscription_info['subscriptionDate'])
-            datetime.strptime(subscription_info['subscriptionDate'], '%Y%m')
+            st.session_state['date'] = re.sub(r'[^0-9]', '',  st.session_state['date'])
+            datetime.strptime(st.session_state['date'], '%Y%m')
         except ValueError:
             print("날짜형식에러")
             return False
@@ -80,19 +93,20 @@ if 'subscription_history' not in st.session_state:
 # chatHistory에 질문이 추가되면 꼬일수가 있어서 history에 추가 안하고 message로 표출해야 됌
 if st.session_state['subscription_question']:
     question, subscription_info = llm_helper.get_extract_entity(st.session_state['subscription_question'])
+    st.session_state['name'] =subscription_info['subscriptionName']
+    st.session_state['date'] =subscription_info['subscriptionDate']
    # st.session_state['chat_history'].append((question, result))
     if(chk_subscription_info(subscription_info)):
-        st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,"상품명과 가입년도가 인식되었습니다.{0} {1} ".format(subscription_info['subscriptionDate'] ,subscription_info['subscriptionName'] ) )  )
+        st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,"상품명과 가입년도가 인식되었습니다. 질문해주세요 {0} {1} ".format(subscription_info['subscriptionDate'] ,subscription_info['subscriptionName'] ) )  )
         st.session_state['subscription_question'] = []
-        st.session_state['name'] =subscription_info['subscriptionName']
-        st.session_state['date'] =subscription_info['subscriptionDate']
+
     else :
-        st.session_state['subscription_history'].append(( st.session_state['subscription_question'] ,"죄송하지만 보험상품명과 년도를 입력해주셔야 정확한 답변이 가능합니다." )  )
+        st.session_state['subscription_history'].append(( st.session_state['subscription_question'] ,reinformation_phrase )  )
 
 
 
 
-if st.session_state['question']:
+elif st.session_state['question']:
 
     def get_hashkey_insurance_date(insurance_name, insurance_date):
         similar_insurance = llm_helper.vector_store.similarity_search_with_score_insurance(insurance_name, "*", index_name="insurance-index", k=4)
