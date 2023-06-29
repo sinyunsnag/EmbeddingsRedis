@@ -88,10 +88,91 @@ if st.session_state['subscription_question']:
         st.session_state['date'] =subscription_info['subscriptionDate']
     else :
         st.session_state['subscription_history'].append(( st.session_state['subscription_question'] ,"죄송하지만 보험상품명과 년도를 입력해주셔야 정확한 답변이 가능합니다." )  )
+
+
+
+
 if st.session_state['question']:
-    question, result, _, sources = llm_helper.get_semantic_answer_lang_chain(st.session_state['question'], st.session_state['chat_history'])
+
+    def get_hashkey_insurance_date(insurance_name, insurance_date):
+        similar_insurance = llm_helper.vector_store.similarity_search_with_score_insurance(insurance_name, "*", index_name="insurance-index", k=4)
+        best_insurance = similar_insurance.docs[0]
+        
+        date_list = [str(i) for i in ast.literal_eval(best_insurance.date)]
+        date_list.append("현재")
+        
+        candidate_date = []
+        for idx in range(1, len(date_list)):
+            candidate_date.append((date_list[idx-1], date_list[idx]))
+
+        insurance_key = best_insurance.insurance
+        date_key = None
+        for start, end in candidate_date:
+            if start <= insurance_date < end:
+                date_key = start
+                sell_date = (start, end)
+        
+        if date_key is None:
+            date_key = candidate_date[-1][0]
+            sell_date = candidate_date[-1]
+
+        candidate_date = date_list[:-1]
+
+        search_key = insurance_key + ":" + date_key
+        hash_key = hashlib.sha1(search_key.encode('utf-8')).hexdigest()    
+
+        candidate_insurance = [ins.insurance for ins in similar_insurance.docs[1:]]
+                
+        return hash_key, insurance_key, sell_date, candidate_date, candidate_insurance
+
+    import ast
+    import hashlib
+
+    # 질문 : 소멸시효에 대해 알려줘
+    st.session_state['name'] = "(무)실손의료비보험(갱신형)3"
+    st.session_state['date'] = '2021년 3월'
+    
+    # 질문 : 
+    # st.session_state['name'] = "생명보험"
+    # st.session_state['date'] = '2021년 3월'
+    
+    hash_key, insurance_key, sell_date, candidate_date, candidate_insurance = get_hashkey_insurance_date(st.session_state['name'], st.session_state['date'])
+
+    def _sell_date(dates):
+        from dateutil.parser import parse
+
+        start = parse(dates[0]).strftime("%Y년 %m월 %d일")
+
+        if dates[1].isdigit():
+            end = parse(dates[1]).strftime("%Y년 %m월 %d일")
+        else:
+            end = dates[1]
+        return start + " ~ " + end
+
+    sell_date = _sell_date(sell_date)
+
+    intro = f"현재 답변은 <{sell_date}> 까지 판매된 <{insurance_key}> 약관 기준으로 설명할게요. \n\n"
+    outro = "\n\n상세한 내용은 상품설명서를 반드시 확인해보시기 바랍니다."
+    def _revised_date(dates):
+        from dateutil.parser import parse
+        dates = [parse(date).strftime("%Y년 %m월 %d일") for date in dates]
+        return    ", ".join(dates)
+    def _candidate_insurance(insurances):
+        return ", ".join(insurances)
+
+    candidate_date = _revised_date(candidate_date)
+    candidate_insurance = _candidate_insurance(candidate_insurance)
+
+    candidate_info = f"""\n\n해당 상품의 개정일은 : {candidate_date} 입니다.
+                        입력하신 정보와 유사한 보험 상품은 : {candidate_insurance} 가 있습니다."""
+    
+    question, result, _, sources = llm_helper.get_semantic_answer_lang_chain(st.session_state['question'], "", hash_key)
+
+    result = intro + result + outro + candidate_info
     st.session_state['chat_history'].append((question, result))
     st.session_state['source_documents'].append(sources)
+    st.session_state['question'] = []
+
 
 if st.session_state['chat_history']:
     for i in range(len(st.session_state['chat_history'])-1, -1, -1):
@@ -111,4 +192,4 @@ if st.session_state['subscription_history']:
   #   for i in range(0, 1, len(st.session_state['chat_history'])):
    #     message(st.session_state['chat_history'][i][0], is_user=True, key=str(i) + '_user')
     #    message(st.session_state['chat_history'][i][1], key=str(i))
-       
+    
