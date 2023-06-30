@@ -4,23 +4,24 @@ from streamlit_chat import message
 from utilities.helper import LLMHelper
 from datetime import datetime
 
-introductory_phrase = """
-안녕하세요. 저는 교보생명의 보험약관을 설명해 드리는 교보 챗GPT입니다. 설명이
-필요하신 보험약관 문의가 있으신가요??
+introductory_phrase = """안녕하세요. 저는 교보생명의 보험약관을 설명해 드리는 교보 챗GPT입니다. 설명이 필요하신 보험약관 문의가 있으신가요??
 
 보다 정확한 내용을 파악하기 위해서 궁금하신 보험명을 포함하여 질문해주시고
-보허
-
+보험 가입하신 고객이라면 가입날짜까지 알려주시면 더욱 더 정확한 답변을 할 수가 있습니다.
+(날짜를 모르시면 최신약관으로 설명됩니다.)
 """
 reinformation_phrase = """
 상품명과 가입년도를 알려주세요~
 (예: 1992년도에 가입했고 종신보험이야)
 """
 
+#화면구성
+st.set_page_config(layout="wide")
+
 
 subscription_info = dict()
 def clear_text_input():
-  #  st.session_state['question'] = chage_synonym(st.session_state['input'])
+    st.session_state['question'] = chage_synonym(st.session_state['input'])
     if chk_subscription_info(subscription_info):
         st.session_state['question'] = st.session_state['input']
         st.session_state['input'] = ""
@@ -33,6 +34,7 @@ def clear_chat_data():
     st.session_state['chat_history'] = []
     st.session_state['source_documents'] = []  
     st.session_state['subscription_history'] = []  
+    
 
 def chage_synonym(question):
     print("테스트 테스트으")
@@ -68,16 +70,14 @@ def chk_subscription_info(subscription_info):
 llm_helper = LLMHelper()
 
 # load synonym data
-#synonym_df = llm_helper.vector_store.get_synonym_results()
-
-# Chat 
-st.text_input("You: ", placeholder="type your question", key="input", on_change=clear_text_input)
-clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
+synonym_df = llm_helper.vector_store.get_synonym_results()
 
 
 # Initialize chat history
 if 'question' not in st.session_state:
     st.session_state['question'] = []
+    #임시 질문
+    st.session_state['temp_question'] = []
 if 'chat_history' not in st.session_state:
     st.session_state['chat_history'] = []
 if 'source_documents' not in st.session_state:
@@ -88,7 +88,8 @@ if 'subscription_question' not in st.session_state:
     st.session_state['name'] = ""
 if 'subscription_history' not in st.session_state:
     st.session_state['subscription_history']  = []
-    st.session_state['subscription_history'].append(("", "가입하신 상품명과 가입년도를 입력해주세요 예: 1992년에 가입했고 상품명은? "))
+    
+
 #값 초기화
 # chatHistory에 질문이 추가되면 꼬일수가 있어서 history에 추가 안하고 message로 표출해야 됌
 if st.session_state['subscription_question']:
@@ -97,16 +98,20 @@ if st.session_state['subscription_question']:
     st.session_state['date'] =subscription_info['subscriptionDate']
    # st.session_state['chat_history'].append((question, result))
     if(chk_subscription_info(subscription_info)):
-        st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,"상품명과 가입년도가 인식되었습니다. 질문해주세요 {0} {1} ".format(subscription_info['subscriptionDate'] ,subscription_info['subscriptionName'] ) )  )
+   #     st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,"상품명과 가입년도가 인식되었습니다. 질문해주세요 {0} {1} ".format( st.session_state['name'] ,st.session_state['date'] ) )  )
+        st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,""  ) )
         st.session_state['subscription_question'] = []
-
+        #기간인식 전 질문했던 것이 있으면 재질문
+        if st.session_state['temp_question']:
+            st.session_state['question'] = st.session_state['temp_question']
+            st.session_state['temp_question'] ="" 
     else :
         st.session_state['subscription_history'].append(( st.session_state['subscription_question'] ,reinformation_phrase )  )
+        #날짜 없이 질문 했으면 임시질문에 저장 
+        st.session_state['temp_question'] = st.session_state['subscription_question']
 
 
-
-
-elif st.session_state['question']:
+if st.session_state['question']:
 
     def get_hashkey_insurance_date(insurance_name, insurance_date):
         similar_insurance = llm_helper.vector_store.similarity_search_with_score_insurance(insurance_name, "*", index_name="insurance-index", k=4)
@@ -177,7 +182,7 @@ elif st.session_state['question']:
     candidate_date = _revised_date(candidate_date)
     candidate_insurance = _candidate_insurance(candidate_insurance)
 
-    candidate_info = f"""\n\n해당 상품의 개정일은 : {candidate_date} 입니다.
+    candidate_info = f"""\n\n
                         입력하신 정보와 유사한 보험 상품은 : {candidate_insurance} 가 있습니다."""
     
     question, result, _, sources = llm_helper.get_semantic_answer_lang_chain(st.session_state['question'], "", hash_key)
@@ -188,19 +193,23 @@ elif st.session_state['question']:
     st.session_state['question'] = []
 
 
-if st.session_state['chat_history']:
-    for i in range(len(st.session_state['chat_history'])-1, -1, -1):
-        message(st.session_state['chat_history'][i][1], key=str(i))
-      #  st.markdown(f'\n\nSources: {st.session_state["source_documents"][i]}')
-        message(st.session_state['chat_history'][i][0], is_user=True, key=str(i) + '_user')
-
-
+#소개문구
+message(introductory_phrase)
 if st.session_state['subscription_history']:
-    for i in range(len(st.session_state['subscription_history'])-1, 0, -1):
-        message(st.session_state['subscription_history'][i][1], key= 'his'+str(i))
-        message(st.session_state['subscription_history'][i][0], is_user=True, key= 'his'+str(i) + '_user')
-    message(st.session_state['subscription_history'][0][1], key='his')
+    for i in range(0, len(st.session_state['subscription_history']),1  ):
+        if st.session_state['subscription_history'][i][0] : message(st.session_state['subscription_history'][i][0], is_user=True, key='sub' +str(i) + '_user')
+        if st.session_state['subscription_history'][i][1] : message(st.session_state['subscription_history'][i][1], key= 'sub'+str(i))
+    
+if st.session_state['chat_history']:
+    for i in  range(0, len(st.session_state['chat_history']), 1):
+        if st.session_state['chat_history'][i][0] : message(st.session_state['chat_history'][i][0], is_user=True, key= str(i) + '_user')
+        if st.session_state['chat_history'][i][1] : message(st.session_state['chat_history'][i][1], key=str(i))
 
+ 
+# Chat 
+st.text_input("You: ", placeholder="type your question", key="input", on_change=clear_text_input)
+clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
+ 
  
   #채팅창 아래로 바꾸고 표출순서 변경
   #   for i in range(0, 1, len(st.session_state['chat_history'])):

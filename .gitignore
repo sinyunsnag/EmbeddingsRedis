@@ -3,3 +3,5 @@ code/embeddings_text.csv
 code/utilities/__pycache__
 .env
 __pycache__
+code/pages/00_Chat.py
+code/utilities/customprompt.py
