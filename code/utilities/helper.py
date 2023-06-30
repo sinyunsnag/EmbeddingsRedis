@@ -92,7 +92,7 @@ class LLMHelper:
         blob_client: AzureBlobStorageClient = None,
         enable_translation: bool = False,
         translator: AzureTranslatorClient = None):
-
+        
         load_dotenv()
         openai.api_type = "azure"
         openai.api_base = os.getenv('OPENAI_API_BASE')
@@ -246,7 +246,6 @@ class LLMHelper:
         sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
 
         container_sas = self.blob_client.get_container_sas()
-        
         result['answer'] = result['answer'].split('SOURCES:')[0].split('Sources:')[0].split('SOURCE:')[0].split('Source:')[0]
         sources = sources.replace('_SAS_TOKEN_PLACEHOLDER_', container_sas)
 
@@ -275,3 +274,24 @@ class LLMHelper:
         result['answer'] = dict([(subs_info[0].split(':')[0],subs_info[0].split(':')[1]),
                                  ( subs_info[1].split(':')[0],subs_info[1].split(':')[1]  )   ])
         return question, result['answer']
+
+    def get_chatgpt_answer(self, question, history):
+        
+        user_message = {"role":"user", "content":question}
+        # messages.append(user_message)
+        response = openai.ChatCompletion.create(
+            model="gpt-35-turbo",
+            engine= 'gpt35test', 
+            messages=history+[user_message],
+        )
+        
+        reply = response.choices[0].message.content
+        
+        return user_message, {"role": "assistant", "content": reply}
+        # extract_chain = LLMChain(llm=self.llm, prompt=EXTRACT_SUB_PROMPT, verbose=True)
+        # result = extract_chain({"question": question, "history": history})
+
+        # subs_info = result['text'].replace(' ','').split(',')
+        # result['answer'] = dict([(subs_info[0].split(':')[0],subs_info[0].split(':')[1]),
+        #                          ( subs_info[1].split(':')[0],subs_info[1].split(':')[1]  )   ])
+        # return question, result['answer']
