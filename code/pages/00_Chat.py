@@ -10,8 +10,7 @@ introductory_phrase = """안녕하세요. 저는 교보생명의 보험약관을
 보험 가입하신 고객이라면 가입날짜까지 알려주시면 더욱 더 정확한 답변을 할 수가 있습니다.
 (날짜를 모르시면 최신약관으로 설명됩니다.)
 """
-reinformation_phrase = """
-상품명과 가입년도를 알려주세요~
+reinformation_phrase = """상품명과 가입년도를 알려주세요~
 (예: 1992년도에 가입했고 종신보험이야)
 """
 
@@ -21,7 +20,7 @@ st.set_page_config(layout="wide")
 
 subscription_info = dict()
 def clear_text_input():
-    st.session_state['question'] = chage_synonym(st.session_state['input'])
+
     if chk_subscription_info(subscription_info):
         st.session_state['question'] = st.session_state['input']
         st.session_state['input'] = ""
@@ -98,13 +97,15 @@ if st.session_state['subscription_question']:
     st.session_state['date'] =subscription_info['subscriptionDate']
    # st.session_state['chat_history'].append((question, result))
     if(chk_subscription_info(subscription_info)):
-   #     st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,"상품명과 가입년도가 인식되었습니다. 질문해주세요 {0} {1} ".format( st.session_state['name'] ,st.session_state['date'] ) )  )
-        st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,""  ) )
+      #  st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,"상품명과 가입년도가 인식되었습니다. 질문해주세요 {0} {1} ".format( st.session_state['name'] ,st.session_state['date'] ) )  )
+       
         st.session_state['subscription_question'] = []
-        #기간인식 전 질문했던 것이 있으면 재질문
+        # 기간인식 전 질문했던 것이 있으면 재질문
         if st.session_state['temp_question']:
             st.session_state['question'] = st.session_state['temp_question']
             st.session_state['temp_question'] ="" 
+        else :
+            st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,"상품명과 가입년도가 알아냈습니다. 질문해주세요 ") )    
     else :
         st.session_state['subscription_history'].append(( st.session_state['subscription_question'] ,reinformation_phrase )  )
         #날짜 없이 질문 했으면 임시질문에 저장 
@@ -148,8 +149,8 @@ if st.session_state['question']:
     import hashlib
 
     # 질문 : 소멸시효에 대해 알려줘
-    st.session_state['name'] = "(무)실손의료비보험(갱신형)3"
-    st.session_state['date'] = '2021년 3월'
+   # st.session_state['name'] = "(무)실손의료비보험(갱신형)3"
+   # st.session_state['date'] = '2021년 3월'
     
     # 질문 : 
     # st.session_state['name'] = "생명보험"
@@ -187,7 +188,8 @@ if st.session_state['question']:
     
     question, result, _, sources = llm_helper.get_semantic_answer_lang_chain(st.session_state['question'], "", hash_key)
 
-    result = intro + result + outro + candidate_info
+   # result = intro + result + outro + candidate_info
+    result = intro + result
     st.session_state['chat_history'].append((question, result))
     st.session_state['source_documents'].append(sources)
     st.session_state['question'] = []
