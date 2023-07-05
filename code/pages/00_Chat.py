@@ -69,7 +69,11 @@ def chk_subscription_info(subscription_info):
 llm_helper = LLMHelper()
 
 # load synonym data
-synonym_df = llm_helper.vector_store.get_synonym_results()
+#synonym_df = llm_helper.vector_store.get_synonym_results()
+
+# Chat 
+st.text_input("You: ", placeholder="type your question", key="input", on_change=clear_text_input)
+clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
 
 
 # Initialize chat history
