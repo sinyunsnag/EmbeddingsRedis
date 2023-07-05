@@ -265,11 +265,12 @@ class RedisExtended(Redis):
         insurance_key = "insurance"
         date_key = "date"
         vector_key = "content_vector"
-        logger.info("TTTTTTTTTQQQQQ : ", insurance)
-        logger.info("TT", date)
         insurance_hash_key = hashlib.sha1(insurance.encode('utf-8')).hexdigest()
 
         key = f"insurance:{insurance_hash_key}"
+
+        # 여기서 에러나면 형식에 안맞는거. 날짜 이상하거나.
+        datetime.datetime.strptime(date_text,"%Y%m%d")
 
         # 기존 date 가져오기.
         if self.client.hget(key, date_key):
@@ -448,21 +449,32 @@ class RedisExtended(Redis):
         print("테스트 전체 embedding 길이 : ", len(docs))
         return docs[:4]
 
+    def similarity_search_limit_score(
+        self, query: str, hash_key:str, k: int = 4, score_threshold: float = 0.2, **kwargs: Any
+    ) -> List[Document]:
+
+        docs_and_scores = self.similarity_search_with_score(query, hash_key, k=k)
+        return [doc for doc, score in docs_and_scores if score < score_threshold]
 
 class KyoboRedisVectorStoreRetriever(RedisVectorStoreRetriever):
     vectorstore: Redis
-    search_type: str = "similarity"
+    search_type: str = "similarity_limit"
     k: int = 4
-    score_threshold: float = 0.4
+    score_threshold: float = 0.15
 
     def get_relevant_documents(self, query: str, hash_key:str) -> List[Document]:
+        self.search_type = 'similarity_limit'
         if self.search_type == "similarity":
             docs = self.vectorstore.similarity_search(query, hash_key, k=self.k)
         elif self.search_type == "similarity_limit":
+            logging.info("similarity with threshold")
             docs = self.vectorstore.similarity_search_limit_score(
-                query, k=self.k, score_threshold=self.score_threshold
+                query, hash_key, k=self.k, score_threshold=self.score_threshold
             )
         else:
             raise ValueError(f"search_type of {self.search_type} not allowed.")
+        
+        logging.info("similar docs")
+        logging.info(docs)
         return docs
 

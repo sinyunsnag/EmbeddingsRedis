@@ -241,7 +241,9 @@ class LLMHelper:
             # top_k_docs_for_context= self.k
         )
         result = chain({"question": question, "chat_history": chat_history, "hash_key": hash_key})
-
+        logging.info("langchian result jh")
+        logging.info(result)
+        
         context = "\n".join(list(map(lambda x: x.page_content, result['source_documents'])))
         sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
 
