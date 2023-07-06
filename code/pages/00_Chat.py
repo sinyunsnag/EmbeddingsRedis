@@ -1,6 +1,6 @@
 import re
 import streamlit as st
-from streamlit_chat import message
+from streamlit_chat_v2 import message
 from utilities.helper import LLMHelper
 from datetime import datetime
 import ast
@@ -8,7 +8,6 @@ import hashlib
 import logging
 
 def clear_text_input():
-
     if chk_subscription_info(subscription_info):
         st.session_state['question'] = st.session_state['input']
         st.session_state['input'] = ""
@@ -229,12 +228,13 @@ elif st.session_state['question']:
     st.session_state['question'] = []
 
 
+message(introductory_phrase, logo="https://www.kyobo.com/dgt/web/mobile/common/img/abt/ci_wordmark.png")
 #소개문구
-message(introductory_phrase)
+# message(introductory_phrase, logo="C:\\chatgpt\\code\\EmbeddingsRedis\\code\\images\\")
 if st.session_state['subscription_history']:
     for i in range(0, len(st.session_state['subscription_history']),1  ):
-        if st.session_state['subscription_history'][i][0] : message(st.session_state['subscription_history'][i][0], is_user=True, key='sub' +str(i) + '_user')
-        if st.session_state['subscription_history'][i][1] : message(st.session_state['subscription_history'][i][1], key= 'sub'+str(i))
+        if st.session_state['subscription_history'][i][0] : message(st.session_state['subscription_history'][i][0], is_user=True, key='sub' +str(i) + '_user', logo="https://blog.kakaocdn.net/dn/bvzhLh/btqyQVekAS7/fH30CcYU1gNrTK6pNCJp31/img.jpg")
+        if st.session_state['subscription_history'][i][1] : message(st.session_state['subscription_history'][i][1], key= 'sub'+str(i), logo="https://blog.kakaocdn.net/dn/bvzhLh/btqyQVekAS7/fH30CcYU1gNrTK6pNCJp31/img.jpg")
     
 if st.session_state['chat_history']:
     for i in  range(0, len(st.session_state['chat_history']), 1):
