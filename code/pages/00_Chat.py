@@ -7,6 +7,23 @@ import ast
 import hashlib
 import logging
 
+introductory_phrase = """안녕하세요. 저는 교보생명의 보험약관을 설명해 드리는 교보 챗GPT입니다. 설명이 필요하신 보험약관 문의가 있으신가요??
+
+보다 정확한 내용을 파악하기 위해서 궁금하신 보험명을 포함하여 질문해주시고
+보험 가입하신 고객이라면 가입날짜까지 알려주시면 더욱 더 정확한 답변을 할 수가 있습니다.
+(날짜를 모르시면 최신약관으로 설명됩니다.)
+"""
+reinformation_phrase = """상품명과 가입년도를 알려주세요~
+(예: 1992년도에 가입했고 종신보험이야)
+"""
+
+#화면구성
+st.set_page_config(layout="wide")
+
+        
+llm_helper = LLMHelper()
+
+subscription_info = dict()
 def clear_text_input():
     if chk_subscription_info(subscription_info):
         st.session_state['question'] = st.session_state['input']
@@ -15,18 +32,9 @@ def clear_text_input():
         st.session_state['subscription_question'] = st.session_state['input']    
         st.session_state['input'] = ""
 
-def clear_chat_data():
-    st.session_state['input'] = ""
-    st.session_state['chat_history'] = []
-    st.session_state['source_documents'] = []  
-    st.session_state['subscription_history'] = []  
-    st.session_state['question'] = []
-
-    st.session_state['temp_question'] = []
-    st.session_state['subscription_question'] = []
-    st.session_state['subscription_history']  = []
-    st.session_state['name'] = ''
-    st.session_state['date'] = ''
+def clear_chat_data():    
+    st.session_state.clear()
+    init_sessionState()
 
 def chage_synonym(question):
     print("테스트 테스트으")
@@ -37,24 +45,18 @@ def chage_synonym(question):
 
 # 데이터 유효성 검사
 def chk_subscription_info(subscription_info):
-    if not st.session_state['name'] or len(st.session_state['name']) < 5 :
+    if not st.session_state['name'] or len(st.session_state['name']) < 2 or st.session_state['name'] == 'no' :
         return False
-    elif not st.session_state['date'] or st.session_state['date'] =='none' :
-        now = datetime.now()
-        st.session_state['date'] = now.strftime('%Y%m')
+    
+    now = datetime.now()
+    if not st.session_state['year'] or not len(st.session_state['year'])==4 :
+        st.session_state['year'] = str(now.year)
+        st.session_state['month'] = '0' + str(now.month) if now.month <10 else str(now.month)        
         return True
-    # 년도만 있을 경우 1월을 더해줌
-    elif st.session_state['date'] :
-        if len(st.session_state['date']) == 4 :
-            st.session_state['date'] = st.session_state['date'] +'01'
-        try:
-            st.session_state['date'] = re.sub(r'[^0-9]', '',  st.session_state['date'])
-            datetime.strptime(st.session_state['date'], '%Y%m')
-        except ValueError:
-            print("날짜형식에러")
-            return False
-        return True
-    else: 
+    else :
+        # 년도만 있을 경우 1월을 더해줌
+        if not st.session_state['month'] or not len(st.session_state['month'])==2:
+            st.session_state['month'] = '0' + str(now.month) if now.month <10 else str(now.month)        
         return True
     
 
@@ -113,61 +115,46 @@ def get_hashkey_insurance_date(insurance_name, insurance_date):
     return hash_key, insurance_key, sell_date, candidate_date, candidate_insurance
 
 
-introductory_phrase = """안녕하세요. 저는 교보생명의 보험약관을 설명해 드리는 교보 챗GPT입니다. 설명이 필요하신 보험약관 문의가 있으신가요??
-
-보다 정확한 내용을 파악하기 위해서 궁금하신 보험명을 포함하여 질문해주시고
-보험 가입하신 고객이라면 가입날짜까지 알려주시면 더욱 더 정확한 답변을 할 수가 있습니다.
-(날짜를 모르시면 최신약관으로 설명됩니다.)
-"""
-reinformation_phrase = """상품명과 가입년도를 알려주세요~
-(예: 1992년도에 가입했고 종신보험이야)
-"""
-
-llm_helper = LLMHelper()
-
-
-#화면구성
-st.set_page_config(layout="wide")
-
-
-subscription_info = dict()
-
-# Initialize chat history
-if 'question' not in st.session_state:
-    st.session_state['question'] = []
-    #임시 질문
-if 'temp_question' not in st.session_state:
-    st.session_state['temp_question'] = []
-if 'chat_history' not in st.session_state:
-    st.session_state['chat_history'] = []
-if 'source_documents' not in st.session_state:
-    st.session_state['source_documents'] = []
-if 'subscription_question' not in st.session_state:
-    st.session_state['subscription_question'] = []
-    st.session_state['year'] = ""
-    st.session_state['name'] = ""
-if 'subscription_history' not in st.session_state:
-    st.session_state['subscription_history']  = []
-        
-
 # load synonym data
 synonym_df = llm_helper.vector_store.get_synonym_results()
 
+# Initialize chat history
+def init_sessionState():
+    if 'question' not in st.session_state:
+        st.session_state['question'] = []
+
+    if 'chat_history' not in st.session_state:
+        st.session_state['chat_history'] = []
+    if 'source_documents' not in st.session_state:
+        st.session_state['source_documents'] = []
+    if 'subscription_question' not in st.session_state:
+        st.session_state['subscription_question'] = []
+        st.session_state['year'] = ""
+        st.session_state['name'] = ""
+        st.session_state['month'] = ""    
+        st.session_state['date'] = ""    
+        #임시 질문
+        st.session_state['temp_question'] = []        
+    if 'subscription_history' not in st.session_state:
+        st.session_state['subscription_history']  = []
     
+init_sessionState() 
 
 #값 초기화
 # chatHistory에 질문이 추가되면 꼬일수가 있어서 history에 추가 안하고 message로 표출해야 됌
 if st.session_state['subscription_question']:
     question, subscription_info = llm_helper.get_extract_entity(st.session_state['subscription_question'])
     st.session_state['name'] =subscription_info['subscriptionName']
-    st.session_state['date'] =subscription_info['subscriptionDate']
+    st.session_state['year'] =subscription_info['subscriptionYear']
+    st.session_state['month'] =subscription_info['subscriptionMonth'] 
    # st.session_state['chat_history'].append((question, result))
     if(chk_subscription_info(subscription_info)):
       #  st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,"상품명과 가입년도가 인식되었습니다. 질문해주세요 {0} {1} ".format( st.session_state['name'] ,st.session_state['date'] ) )  )
+       
         # 기간인식 전 질문했던 것이 있으면 재질문
         if st.session_state['temp_question']:
             # st.session_state['question'] = st.session_state['temp_question']
-            st.session_state['subscription_history'].append((st.session_state['subscription_question'], "상품명과 가입년도를 알아냈습니다. 질문해주세요 "))
+          #  st.session_state['subscription_history'].append((st.session_state['subscription_question'], "상품명과 가입년도를 알아냈습니다. 질문해주세요 "))
             hash_key, insurance_key, sell_date, candidate_date, candidate_insurance = get_hashkey_insurance_date(st.session_state['name'], st.session_state['date'])
             # all_question = ". ".join(st.session_state['temp_question'])
             question, result, _, sources = llm_helper.get_semantic_answer_lang_chain(st.session_state['temp_question'], "", hash_key)
@@ -176,14 +163,14 @@ if st.session_state['subscription_question']:
                 logging.info("subscription histroy 끝")
                 logging.info(sources)
                 logging.info(_)
-                st.session_state['chat_history'].append((question, result))
+          #      st.session_state['chat_history'].append(( st.session_state['subscription_question'], result))
+            st.session_state['subscription_history'].append(( st.session_state['subscription_question'],""))
             # else:
             #     st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,"상품명과 가입년도가 알아냈습니다. 질문해주세요 ") )
-
-            st.session_state['temp_question'] = []
+        # 기간인식이 없었으면 
+                #st.session_state['temp_question'] = []
         else :
             st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,"상품명과 가입년도가 알아냈습니다. 질문해주세요 ") )    
-        
     else :
         st.session_state['subscription_history'].append(( st.session_state['subscription_question'] ,reinformation_phrase )  )
         #날짜 없이 질문 했으면 임시질문에 저장 
@@ -192,7 +179,7 @@ if st.session_state['subscription_question']:
 
     st.session_state['subscription_question'] = []
 
-elif st.session_state['question']:
+if st.session_state['question'] or(st.session_state['temp_question'] and chk_subscription_info(subscription_info) ) :
 
     # 질문 : 소멸시효에 대해 알려줘
    # st.session_state['name'] = "(무)실손의료비보험(갱신형)3"
@@ -202,6 +189,8 @@ elif st.session_state['question']:
     # st.session_state['name'] = "생명보험"
     # st.session_state['date'] = '2021년 3월'
     
+    
+    st.session_state['date'] =  st.session_state['year'] + "." + st.session_state['month'] 
     hash_key, insurance_key, sell_date, candidate_date, candidate_insurance = get_hashkey_insurance_date(st.session_state['name'], st.session_state['date'])
 
     intro = f"현재 답변은 <{sell_date}> 까지 판매된 <{insurance_key}> 약관 기준으로 설명할게요. \n\n"
@@ -210,8 +199,12 @@ elif st.session_state['question']:
     candidate_info = f"""\n\n
                         입력하신 정보와 유사한 보험 상품은 : {candidate_insurance} 가 있습니다."""
     
-    question, result, _, sources = llm_helper.get_semantic_answer_lang_chain(st.session_state['question'], "", hash_key)
+    if st.session_state['temp_question']:
+        question, result, _, sources = llm_helper.get_semantic_answer_lang_chain(st.session_state['temp_question'], "", hash_key)
 
+    else :
+         question, result, _, sources = llm_helper.get_semantic_answer_lang_chain(st.session_state['question'], "", hash_key)
+         
     if sources == '':
         logging.info("no sources")
         logging.info(sources)
@@ -222,8 +215,11 @@ elif st.session_state['question']:
         logging.info(sources)
         logging.info(_)
         result = intro + result + outro + candidate_info
-
-    st.session_state['chat_history'].append((question, result))
+    if st.session_state['temp_question']:    
+        st.session_state['chat_history'].append(("", result))
+        st.session_state['temp_question'] = []
+    else :
+        st.session_state['chat_history'].append((question, result))    
     st.session_state['source_documents'].append(sources)
     st.session_state['question'] = []
 

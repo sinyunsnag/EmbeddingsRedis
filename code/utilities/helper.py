@@ -5,6 +5,7 @@ import logging
 import re
 import hashlib
 
+
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import AzureOpenAI
 from langchain.vectorstores.base import VectorStore
@@ -93,11 +94,19 @@ class LLMHelper:
         enable_translation: bool = False,
         translator: AzureTranslatorClient = None):
         
+        
         load_dotenv()
         openai.api_type = "azure"
         openai.api_base = os.getenv('OPENAI_API_BASE')
         openai.api_version = "2023-03-15-preview"
         openai.api_key = os.getenv("OPENAI_API_KEY")
+                #빙 설정
+        self.use_bing = os.getenv("USE_BING", True)
+        self.bing_subscription_key = os.getenv("BING_SUBSCRIPTION_KEY", "b120ca25231c4fb79aa96d58189001eb")
+        self.bing_search_url = os.getenv("BING_SEARCH_URL", "https://api.bing.microsoft.com/v7.0/search")
+        self.list_of_comma_separated_urls = os.getenv("LIST_OF_COMMA_SEPARATED_URLS", "")
+        self.max_output_token =  int(os.environ.get("MAX_OUTPUT_TOKENS", "750"))
+        self.comp_model = os.getenv("COMP_MODEL", "gpt-35-turbo")
 
         # Azure OpenAI settings
         self.api_base = openai.api_base
@@ -110,7 +119,7 @@ class LLMHelper:
         self.max_tokens: int = int(os.getenv("OPENAI_MAX_TOKENS", -1)) if max_tokens is None else max_tokens
         self.prompt = PROMPT if custom_prompt == '' else PromptTemplate(template=custom_prompt, input_variables=["summaries", "question"])
         self.vector_store_type = os.getenv("VECTOR_STORE_TYPE")
-
+        
         # Azure Search settings
         if  self.vector_store_type == "AzureSearch":
             self.vector_store_address: str = os.getenv('AZURE_SEARCH_SERVICE_NAME')
@@ -149,7 +158,9 @@ class LLMHelper:
         self.translator : AzureTranslatorClient = AzureTranslatorClient() if translator is None else translator
 
         self.user_agent: UserAgent() = UserAgent()
-        self.user_agent.random
+      #  self.user_agent.random
+        
+
 
     def add_embeddings_lc(self, source_url):
         try:
@@ -241,9 +252,7 @@ class LLMHelper:
             # top_k_docs_for_context= self.k
         )
         result = chain({"question": question, "chat_history": chat_history, "hash_key": hash_key})
-        logging.info("langchian result jh")
-        logging.info(result)
-        
+
         context = "\n".join(list(map(lambda x: x.page_content, result['source_documents'])))
         sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
 
@@ -276,24 +285,3 @@ class LLMHelper:
         result['answer'] = dict([(subs_info[0].split(':')[0],subs_info[0].split(':')[1]),
                                  ( subs_info[1].split(':')[0],subs_info[1].split(':')[1]  )   ])
         return question, result['answer']
-
-    def get_chatgpt_answer(self, question, history):
-        
-        user_message = {"role":"user", "content":question}
-        # messages.append(user_message)
-        response = openai.ChatCompletion.create(
-            model="gpt-35-turbo",
-            engine= 'gpt35test', 
-            messages=history+[user_message],
-        )
-        
-        reply = response.choices[0].message.content
-        
-        return user_message, {"role": "assistant", "content": reply}
-        # extract_chain = LLMChain(llm=self.llm, prompt=EXTRACT_SUB_PROMPT, verbose=True)
-        # result = extract_chain({"question": question, "history": history})
-
-        # subs_info = result['text'].replace(' ','').split(',')
-        # result['answer'] = dict([(subs_info[0].split(':')[0],subs_info[0].split(':')[1]),
-        #                          ( subs_info[1].split(':')[0],subs_info[1].split(':')[1]  )   ])
-        # return question, result['answer']
