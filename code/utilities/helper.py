@@ -25,7 +25,7 @@ from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from utilities.formrecognizer import AzureFormRecognizerClient
 from utilities.azureblobstorage import AzureBlobStorageClient
 from utilities.translator import AzureTranslatorClient
-from utilities.customprompt import PROMPT, EXTRACT_SUB_PROMPT
+from utilities.customprompt import PROMPT, EXTRACT_SUB_PROMPT, EXTRACT_SENTENCE_COMPONENTS_PROMPT
 from utilities.redis import RedisExtended
 from utilities.azuresearch import AzureSearch
 
@@ -241,9 +241,7 @@ class LLMHelper:
             # top_k_docs_for_context= self.k
         )
         result = chain({"question": question, "chat_history": chat_history, "hash_key": hash_key})
-        logging.info("langchian result jh")
-        logging.info(result)
-        
+
         context = "\n".join(list(map(lambda x: x.page_content, result['source_documents'])))
         sources = "\n".join(set(map(lambda x: x.metadata["source"], result['source_documents'])))
 
@@ -275,6 +273,18 @@ class LLMHelper:
         subs_info = result['text'].replace(' ','').split(',')
         result['answer'] = dict([(subs_info[0].split(':')[0],subs_info[0].split(':')[1]),
                                  ( subs_info[1].split(':')[0],subs_info[1].split(':')[1]  )   ])
+        return question, result['answer']
+    
+    def get_sentence_components(self, question):
+        extract_chain = LLMChain(llm=self.llm, prompt=EXTRACT_SENTENCE_COMPONENTS_PROMPT, verbose=True)
+        result = extract_chain({"question": question})
+
+        subs_info = result['text'].replace(' ','').split(',')       
+        result['answer'] = dict([(subs_info[0].split(':')[0],subs_info[0].split(':')[1]),
+                                 (subs_info[1].split(':')[0],subs_info[1].split(':')[1]),
+                                 (subs_info[2].split(':')[0],subs_info[2].split(':')[1]),
+                                 (subs_info[3].split(':')[0],subs_info[3].split(':')[1]) ])
+        logging.info(f" ******** result['answer'] : {result['answer']}")
         return question, result['answer']
 
     def get_chatgpt_answer(self, question, history):
