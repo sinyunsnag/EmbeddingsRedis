@@ -292,11 +292,11 @@ class LLMHelper:
         extract_chain = LLMChain(llm=self.llm, prompt=EXTRACT_SENTENCE_COMPONENTS_PROMPT, verbose=True)
         result = extract_chain({"question": question})
 
-        subs_info = result['text'].replace(' ','').split(',')       
-        result['answer'] = dict([(subs_info[0].split(':')[0],subs_info[0].split(':')[1]),
-                                 (subs_info[1].split(':')[0],subs_info[1].split(':')[1]),
-                                 (subs_info[2].split(':')[0],subs_info[2].split(':')[1]),
-                                 (subs_info[3].split(':')[0],subs_info[3].split(':')[1]) ])
+        subs_info = result['text'].split('|')       
+        result['answer'] = dict([(subs_info[0].split(':')[0].replace(' ',''),subs_info[0].split(':')[1].replace(' ','')),
+                                 (subs_info[1].split(':')[0].replace(' ',''),subs_info[1].split(':')[1].replace(' ','')),
+                                 (subs_info[2].split(':')[0].replace(' ',''),subs_info[2].split(':')[1].replace(' ','')),
+                                 (subs_info[3].split(':')[0].replace(' ',''),subs_info[3].split(':')[1].lstrip()) ])
         return question, result['answer']
 
     def get_chatgpt_answer(self, question, history):

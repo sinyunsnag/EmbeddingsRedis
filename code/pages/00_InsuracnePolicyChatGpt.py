@@ -1,6 +1,8 @@
 import re
 import streamlit as st
-from streamlit_chat import message
+#from streamlit_chat import message
+from streamlit_chat_kyobo import message
+
 from utilities.helper import LLMHelper
 from datetime import datetime
 import logging
@@ -43,14 +45,34 @@ st.markdown("""
 
 subscription_info = dict()
 
+def display_log():
+    logging.info("**********************************************************************************************************")
+    logging.info(f"[display_log] st.session_state['not_enought_info_list']  : {st.session_state['not_enought_info_list']}")
+    logging.info(f"[display_log] length of st.ss[]'not_enought_info_list']  : {len(st.session_state['not_enought_info_list'])}")
+    logging.info(f"[display_log] st.session_state['previous_info']          : {st.session_state['previous_info']}")
+    logging.info(f"[display_log] st.session_state['subscription_name']      : {st.session_state['subscription_name']}")
+    logging.info(f"[display_log] st.session_state['subscription_date']      : {st.session_state['subscription_date']}")
+    logging.info(f"[display_log] st.session_state['intent']                 : {st.session_state['intent']}")
+    logging.info(f"[display_log] st.session_state['sentence']               : {st.session_state['sentence']}")
+    logging.info("**********************************************************************************************************")
+
+
 def fill_session_var(subscription_info):
-    
+
     for info in subscription_info:
         if subscription_info[info] == "none":
-            if st.session_state[info] == "":
+            if st.session_state['previous_info'][info] == "":
                 st.session_state[info] = ""
+            else:
+                st.session_state[info] = st.session_state['previous_info'][info]
+                st.session_state['not_enought_info_list'].remove(info)
+                
         else:
             st.session_state[info] = subscription_info[info]
+            if info in st.session_state['not_enought_info_list']:
+                st.session_state['not_enought_info_list'].remove(info)
+        
+        st.session_state['previous_info'][info] = st.session_state[info]    
 
 def validation_check_subscription_info(subscription_info):
     
@@ -63,7 +85,13 @@ def validation_check_subscription_info(subscription_info):
                 not_enough_info.append(info)
 
         elif info == "subscription_date":
-            if subscription_info[info] and subscription_info[info] != 'none':
+
+            if st.session_state['previous_info'][info] != "" and \
+                len(st.session_state['previous_info'][info]) == 6 and \
+                subscription_info[info] == 'none':
+                    subscription_info[info] = st.session_state['previous_info'][info]
+                
+            elif subscription_info[info] and subscription_info[info] != 'none':
                 now = datetime.now()
                 if "YYYY" in subscription_info[info]:
                     subscription_info[info] = subscription_info[info].replace("YYYY", now.strftime('%Y'))
@@ -74,7 +102,7 @@ def validation_check_subscription_info(subscription_info):
                     two_year_ago = now - relativedelta(years=2)
                     subscription_info[info] = subscription_info[info].replace("ZZZZ", two_year_ago.strftime('%Y'))                    
                 
-                    subscription_info[info] = re.sub(r'[^0-9]', '',  subscription_info[info])
+                subscription_info[info] = re.sub(r'[^0-9]', '',  subscription_info[info])
 
                 if len(subscription_info[info]) == 4 :
                     subscription_info[info] = subscription_info[info] +'01'
@@ -101,21 +129,27 @@ def validation_check_subscription_info(subscription_info):
     return not_enough_info
 
 def clear_text_input():
+
+    display_log()
+
     st.session_state['question'] = chage_synonym(st.session_state['input'])
     st.session_state['question'] = st.session_state['input']
     st.session_state['input'] = ""    
 
     question, subscription_info = llm_helper.get_sentence_components(st.session_state['question'])
-            
-    st.session_state['not_enought_info_list'] = validation_check_subscription_info(subscription_info)
 
-    fill_session_var(subscription_info)
+    display_log()
 
-    logging.info(f"***** st.session_state['not_enought_info_list'] : {st.session_state['not_enought_info_list']}")
-    logging.info(f"***** st.session_state['subscription_name'] : {st.session_state['subscription_name']}")
-    logging.info(f"***** st.session_state['subscription_date'] : {st.session_state['subscription_date']}")
-    logging.info(f"***** st.session_state['intent'] : {st.session_state['intent']}")
-    logging.info(f"***** st.session_state['sentence'] : {st.session_state['sentence']}")
+    if check_all_none(subscription_info):
+        reset_related_session_var()
+    else:
+        st.session_state['not_enought_info_list'] = validation_check_subscription_info(subscription_info)
+        fill_session_var(subscription_info)
+
+    display_log()
+    
+def check_all_none(dict):
+    return all(value.lower() == 'none' for value in dict.values())
 
 
 def clear_chat_data():
@@ -123,7 +157,14 @@ def clear_chat_data():
     st.session_state['chat_history'] = []
     st.session_state['source_documents'] = []  
     st.session_state['subscription_history'] = []  
-    
+
+def reset_related_session_var():
+    st.session_state['not_enought_info_list'].clear()
+    for key in st.session_state['previous_info']:
+        st.session_state['not_enought_info_list'].append(key)
+        st.session_state['previous_info'][key] = ""
+        st.session_state[key] = ""
+        subscription_info[key] = ""
 
 def make_chat_for_enought_info():
 
@@ -132,13 +173,13 @@ def make_chat_for_enought_info():
     for val in st.session_state['not_enought_info_list']:
 
         if val == 'subscription_name':
-            chat_result += " [보험 상품명] "
+            chat_result += "  [보험 상품명]  "
         elif val == 'subscription_date':
-            chat_result += " [보험 가입일자] " 
+            chat_result += "  [보험 가입일]  " 
         elif val == 'sentence':
-            chat_result += " [보험 관련 궁금한점] "
+            chat_result += "  [보험 관련 궁금한점]  "
     
-    chat_result = "고객님," + chat_result + "을 포함해서 질문해주세요."        
+    chat_result = "고객님," + chat_result + "을 알려주세요."        
 
     return chat_result
 
@@ -164,16 +205,19 @@ if 'chat_history' not in st.session_state:
 if 'source_documents' not in st.session_state:
     st.session_state['source_documents'] = []
 
-# if 'subscription_question' not in st.session_state:
-#     st.session_state['subscription_question'] = []
-#     st.session_state['year'] = ""
-#     st.session_state['name'] = ""
-
 if 'subscription_history' not in st.session_state:
     st.session_state['subscription_history']  = []
 
 if 'not_enought_info_list' not in st.session_state:
     st.session_state['not_enought_info_list'] = []
+
+if 'previous_info' not in st.session_state:
+    st.session_state['previous_info'] = {
+        'subscription_name' : "" ,
+        'subscription_date' : "" ,
+        'intent' : "" ,
+        'sentence' : ""
+    }
 
 if 'subscription_name' not in st.session_state:
     st.session_state['subscription_name'] = ""
@@ -186,11 +230,6 @@ if 'intent' not in st.session_state:
 
 if 'sentence' not in st.session_state:
     st.session_state['sentence'] = ""    
-
-# if 'not_enough_info_history' not in st.session_state:
-#     st.session_state['not_enough_info_history'] = ""
-
-logging.info(f"len(st.session_state['not_enought_info_list']) : {len(st.session_state['not_enought_info_list'])}")
 
 if st.session_state['question'] and len(st.session_state['not_enought_info_list']) == 0:
 
@@ -259,7 +298,8 @@ if st.session_state['question'] and len(st.session_state['not_enought_info_list'
     candidate_info = f"""\n\n
                         입력하신 정보와 유사한 보험 상품은 : {candidate_insurance} 가 있습니다."""
     
-    question, result, _, sources = llm_helper.get_semantic_answer_lang_chain(st.session_state['question'], "", hash_key)
+    # st.session
+    question, result, _, sources = llm_helper.get_semantic_answer_lang_chain(st.session_state['sentence'], "", hash_key)
 
     result = intro + result + outro + candidate_info
 
@@ -286,10 +326,4 @@ if st.session_state['chat_history']:
 # Chat 
 st.text_input("You: ", placeholder="보험관련 질문을 해주세요(보험상품명과 가입날짜를 포함하면 좋습니다)", key="input", on_change=clear_text_input)
 clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
- 
- 
-  #채팅창 아래로 바꾸고 표출순서 변경
-  #   for i in range(0, 1, len(st.session_state['chat_history'])):
-   #     message(st.session_state['chat_history'][i][0], is_user=True, key=str(i) + '_user')
-    #    message(st.session_state['chat_history'][i][1], key=str(i))
     
