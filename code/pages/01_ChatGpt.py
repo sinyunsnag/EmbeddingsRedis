@@ -1,7 +1,8 @@
 import re
 import streamlit as st
 from streamlit_chat import message
-from utilities.helper import LLMHelper
+from utilities.openAI_helper import openAI_helper
+from utilities.bing_helper import bing
 import logging
 
 def clear_text_input():
@@ -22,17 +23,16 @@ if 'open_chat_history' not in st.session_state:
         ]
 if 'source_documents' not in st.session_state:
     st.session_state['source_documents'] = []
-llm_helper = LLMHelper()
+openAI_Helper = openAI_helper()
+bing = bing()
 
 # load synonym data
 
 
 if st.session_state['open_question']:
-    logging.info(f"#### st.session_state['open_question'] : {st.session_state['open_question']}")
-    logging.info(f"#### st.session_state['open_chat_history'] : {st.session_state['open_chat_history']}")
-    
-    open_question, result = llm_helper.get_chatgpt_answer(st.session_state['open_question'], st.session_state['open_chat_history'])
-
+ # 빙서치
+   # open_question, result = bing.bing_search(st.session_state['open_question'])
+    open_question, result = openAI_Helper.get_chatgpt_answer(st.session_state['open_question'], st.session_state['open_chat_history'])
     st.session_state['open_chat_history'].append(open_question)
     st.session_state['open_chat_history'].append(result)
     # st.session_state['source_documents'].append(sources)
