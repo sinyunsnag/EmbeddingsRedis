@@ -1,6 +1,6 @@
 import re
 import streamlit as st
-from streamlit_chat_v2 import message
+from streamlit_chat_kyobo import message
 from utilities.helper import LLMHelper
 from datetime import datetime
 import ast
@@ -146,7 +146,7 @@ if st.session_state['subscription_question']:
     question, subscription_info = llm_helper.get_extract_entity(st.session_state['subscription_question'])
     st.session_state['name'] =subscription_info['subscriptionName']
     st.session_state['year'] =subscription_info['subscriptionYear']
-    st.session_state['month'] =subscription_info['subscriptionMonth'] 
+    st.session_state['month'] = subscription_info['subscriptionMonth'] 
    # st.session_state['chat_history'].append((question, result))
     if(chk_subscription_info(subscription_info)):
       #  st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,"상품명과 가입년도가 인식되었습니다. 질문해주세요 {0} {1} ".format( st.session_state['name'] ,st.session_state['date'] ) )  )
@@ -224,13 +224,13 @@ if st.session_state['question'] or(st.session_state['temp_question'] and chk_sub
     st.session_state['question'] = []
 
 
-message(introductory_phrase, logo="https://www.kyobo.com/dgt/web/mobile/common/img/abt/ci_wordmark.png")
+message(introductory_phrase)
 #소개문구
 # message(introductory_phrase, logo="C:\\chatgpt\\code\\EmbeddingsRedis\\code\\images\\")
 if st.session_state['subscription_history']:
     for i in range(0, len(st.session_state['subscription_history']),1  ):
-        if st.session_state['subscription_history'][i][0] : message(st.session_state['subscription_history'][i][0], is_user=True, key='sub' +str(i) + '_user', logo="https://blog.kakaocdn.net/dn/bvzhLh/btqyQVekAS7/fH30CcYU1gNrTK6pNCJp31/img.jpg")
-        if st.session_state['subscription_history'][i][1] : message(st.session_state['subscription_history'][i][1], key= 'sub'+str(i), logo="https://blog.kakaocdn.net/dn/bvzhLh/btqyQVekAS7/fH30CcYU1gNrTK6pNCJp31/img.jpg")
+        if st.session_state['subscription_history'][i][0] : message(st.session_state['subscription_history'][i][0], is_user=True, key='sub' +str(i) + '_user')
+        if st.session_state['subscription_history'][i][1] : message(st.session_state['subscription_history'][i][1], key= 'sub'+str(i))
     
 if st.session_state['chat_history']:
     for i in  range(0, len(st.session_state['chat_history']), 1):
