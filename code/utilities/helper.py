@@ -297,7 +297,6 @@ class LLMHelper:
                                  (subs_info[1].split(':')[0],subs_info[1].split(':')[1]),
                                  (subs_info[2].split(':')[0],subs_info[2].split(':')[1]),
                                  (subs_info[3].split(':')[0],subs_info[3].split(':')[1]) ])
-        logging.info(f" ******** result['answer'] : {result['answer']}")
         return question, result['answer']
 
     def get_chatgpt_answer(self, question, history):
