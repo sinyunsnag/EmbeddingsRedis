@@ -283,5 +283,7 @@ class LLMHelper:
 
         subs_info = result['text'].replace(' ','').split(',')
         result['answer'] = dict([(subs_info[0].split(':')[0],subs_info[0].split(':')[1]),
-                                 ( subs_info[1].split(':')[0],subs_info[1].split(':')[1]  )   ])
+                                 ( subs_info[1].split(':')[0],subs_info[1].split(':')[1]  ),
+                                ( subs_info[2].split(':')[0],subs_info[2].split(':')[1]  )
+                                 ])
         return question, result['answer']
