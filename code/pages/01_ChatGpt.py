@@ -28,7 +28,9 @@ llm_helper = LLMHelper()
 
 
 if st.session_state['open_question']:
-
+    logging.info(f"#### st.session_state['open_question'] : {st.session_state['open_question']}")
+    logging.info(f"#### st.session_state['open_chat_history'] : {st.session_state['open_chat_history']}")
+    
     open_question, result = llm_helper.get_chatgpt_answer(st.session_state['open_question'], st.session_state['open_chat_history'])
 
     st.session_state['open_chat_history'].append(open_question)
