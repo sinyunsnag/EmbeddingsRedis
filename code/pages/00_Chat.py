@@ -65,51 +65,13 @@ def _sell_date(dates):
 
     start = parse(dates[0]).strftime("%Y년 %m월 %d일")
 
-# load synonym data
-synonym_df = llm_helper.vector_store.get_synonym_results()
+def _revised_date(dates):
+    from dateutil.parser import parse
+    dates = [parse(date).strftime("%Y년 %m월 %d일") for date in dates]
+    return ", ".join(dates)
 
-
-# Initialize chat history
-if 'question' not in st.session_state:
-    st.session_state['question'] = []
-    #임시 질문
-    st.session_state['temp_question'] = []
-if 'chat_history' not in st.session_state:
-    st.session_state['chat_history'] = []
-if 'source_documents' not in st.session_state:
-    st.session_state['source_documents'] = []
-if 'subscription_question' not in st.session_state:
-    st.session_state['subscription_question'] = []
-    st.session_state['year'] = ""
-    st.session_state['name'] = ""
-if 'subscription_history' not in st.session_state:
-    st.session_state['subscription_history']  = []
-    
-
-#값 초기화
-# chatHistory에 질문이 추가되면 꼬일수가 있어서 history에 추가 안하고 message로 표출해야 됌
-if st.session_state['subscription_question']:
-    question, subscription_info = llm_helper.get_extract_entity(st.session_state['subscription_question'])
-    st.session_state['name'] =subscription_info['subscriptionName']
-    st.session_state['date'] =subscription_info['subscriptionDate']
-   # st.session_state['chat_history'].append((question, result))
-    if(chk_subscription_info(subscription_info)):
-      #  st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,"상품명과 가입년도가 인식되었습니다. 질문해주세요 {0} {1} ".format( st.session_state['name'] ,st.session_state['date'] ) )  )
-       
-        st.session_state['subscription_question'] = []
-        # 기간인식 전 질문했던 것이 있으면 재질문
-        if st.session_state['temp_question']:
-            st.session_state['question'] = st.session_state['temp_question']
-            st.session_state['temp_question'] ="" 
-        else :
-            st.session_state['subscription_history'].append((st.session_state['subscription_question'] ,"상품명과 가입년도가 알아냈습니다. 질문해주세요 ") )    
-    else :
-        st.session_state['subscription_history'].append(( st.session_state['subscription_question'] ,reinformation_phrase )  )
-        #날짜 없이 질문 했으면 임시질문에 저장 
-        st.session_state['temp_question'] = st.session_state['subscription_question']
-
-
-if st.session_state['question']:
+def _candidate_insurance(insurances):
+    return ", ".join(insurances)
 
 def get_hashkey_insurance_date(insurance_name, insurance_date):
     similar_insurance = llm_helper.vector_store.similarity_search_with_score_insurance(insurance_name, "*", index_name="insurance-index", k=4)

@@ -269,9 +269,6 @@ class RedisExtended(Redis):
 
         key = f"insurance:{insurance_hash_key}"
 
-        # 여기서 에러나면 형식에 안맞는거. 날짜 이상하거나.
-        datetime.datetime.strptime(date_text,"%Y%m%d")
-
         # 기존 date 가져오기.
         if self.client.hget(key, date_key):
             date_list = ast.literal_eval(self.client.hget(key, date_key).decode())
