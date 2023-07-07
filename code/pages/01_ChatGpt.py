@@ -1,9 +1,39 @@
 import re
 import streamlit as st
-from streamlit_chat import message
+from streamlit_chat_kyobo import message
 from utilities.openAI_helper import openAI_helper
 from utilities.bing_helper import bing
 import logging
+
+
+st.set_page_config(layout="wide")
+st.markdown("""
+<style>
+.welcome {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  border: 1px solid #90ee90;  /* 녹색 테두리 */
+  background-color: #f0fff0;  /* 박스 내부의 연한 녹색 */
+  padding: 10px;
+  border-radius: 5px; /* 박스 모서리 둥글게 */
+
+}
+
+.introduction {
+
+ font-family : "돋음"; 
+  font-size: 15px;
+}
+</style>
+
+<div class="welcome">
+    <p class="introduction">안녕하세요! <br>
+    교보생명 임직원 업무활용을 위한 교보GPT입니다. <br>
+    만나서 반갑습니다~☺ </p>
+</div>
+""", unsafe_allow_html=True)
 
 def clear_text_input():
     st.session_state['open_question'] = st.session_state['input']
