@@ -37,8 +37,9 @@ st.markdown("""
 </div>
 <div class="introduction">
 <ol>
-    <li>보다 정확한 내용을 파악하기 위해서 궁금하신 <b>보험명</b>을 포함하여 질문해주세요</li>
-    <li>보험 가입하신 고객이라면 <b>가입날짜</b>까지 알려주시면 더욱 더 정확한 답변을 할 수가 있습니다.(날짜를 모르시면 최신약관으로 설명됩니다.)</li>
+    <li>약관 내용을 검색하기 위해서 <b>[보험명]</b>을 포함하여 질문해주세요.</li>
+    <li>보험 상품의 <b>[가입일자]</b>까지 알려주시면, 더욱 더 정확한 답변을 할 수가 있습니다.(가입일자가 없으면, 최신약관으로 설명됩니다.)</li>
+    <li>약관의 내용중에서 <b>[보험 관련 궁금한점]</b> 을 말씀해주시면 교보 ChatGPT가 대답해 드립니다.
 </ol>
 </div>
 """, unsafe_allow_html=True)
@@ -86,37 +87,68 @@ def validation_check_subscription_info(subscription_info):
 
         elif info == "subscription_date":
 
-            if st.session_state['previous_info'][info] != "" and \
-                len(st.session_state['previous_info'][info]) == 6 and \
-                subscription_info[info] == 'none':
-                    subscription_info[info] = st.session_state['previous_info'][info]
-                
-            elif subscription_info[info] and subscription_info[info] != 'none':
+            # 사용자로부터 입력받은 경우
+            if subscription_info[info] and subscription_info[info] != 'none':
+
                 now = datetime.now()
+
+                # Step 1. 연월일 구분 dot 제거
+                subscription_info[info] = subscription_info[info].replace(".","")
+                
+                # Step 2. 길이 8로 맞추기 전에 숫자형식을 채워 넣어 놓음
+
+                # 연도 없을때
                 if "YYYY" in subscription_info[info]:
                     subscription_info[info] = subscription_info[info].replace("YYYY", now.strftime('%Y'))
+
+                # 작년
                 elif "XXXX" in subscription_info[info]:
                     one_year_ago = now - relativedelta(years=1)
                     subscription_info[info] = subscription_info[info].replace("XXXX", one_year_ago.strftime('%Y'))
+
+                # 재작년
                 elif "ZZZZ" in subscription_info[info]:
                     two_year_ago = now - relativedelta(years=2)
-                    subscription_info[info] = subscription_info[info].replace("ZZZZ", two_year_ago.strftime('%Y'))                    
+                    subscription_info[info] = subscription_info[info].replace("ZZZZ", two_year_ago.strftime('%Y'))  
+
+                # n년전 
+                elif "YAG" in subscription_info[info]: 
+                    match = re.search(r'(\d+)YAG', subscription_info[info])
+
+                    if match:
+                        logging.info(f"#### match.group(1) : {match.group(1)}")
+                        n_year_ago = now - relativedelta(years=int(match.group(1)))
+                        logging.info(f"#### n_year_ago : {n_year_ago}")
+                        subscription_info[info] = subscription_info[info].replace((match.group(1))+"YAG", n_year_ago.strftime('%Y')) 
+                        
+                    # 에러상황인 경우, 연도 없을때와 같이
+                    else:
+                        subscription_info[info] = now.strftime('%Y')
                 
+                # 숫자만 남기도록
                 subscription_info[info] = re.sub(r'[^0-9]', '',  subscription_info[info])
+                
+                # step 3. 숫자만 남은 문자열의 길이에 따른 처리
 
                 if len(subscription_info[info]) == 4 :
+                    subscription_info[info] = subscription_info[info] +'0101'
+                    datetime.strptime(subscription_info[info], '%Y%m%d')
+
+                if len(subscription_info[info]) == 6 :
                     subscription_info[info] = subscription_info[info] +'01'
-                    datetime.strptime(subscription_info[info], '%Y%m')
+                    datetime.strptime(subscription_info[info], '%Y%m%d')
                 
-                if len(subscription_info[info]) != 6:
+                if len(subscription_info[info]) != 8:
                     not_enough_info.append(info)
 
-            elif subscription_info[info] == 'none':
-                now = datetime.now()
-                subscription_info[info] = now.strftime('%Y%m')
-            
+            # 사용자로부터 입력 받지 않은 경우, 이전 정보를 유지하도록 하거나, 현재일자 기준으로 함
             else:
-                not_enough_info.append(info)
+                if st.session_state['previous_info'][info] != "":
+                    subscription_info[info] = st.session_state['previous_info'][info]
+
+                else:
+                    now = datetime.now()
+                    subscription_info[info] = now.strftime('%Y%m%d')    
 
         elif info == "intent":
             if subscription_info[info] == 'none':   
@@ -156,7 +188,17 @@ def clear_chat_data():
     st.session_state['input'] = ""
     st.session_state['chat_history'] = []
     st.session_state['source_documents'] = []  
-    st.session_state['subscription_history'] = []  
+    st.session_state['not_enought_info_list'] = []
+    st.session_state['previous_info'] = {
+        'subscription_name' : "" ,
+        'subscription_date' : "" ,
+        'intent' : "" ,
+        'sentence' : ""
+    }
+    st.session_state['subscription_name'] = ""
+    st.session_state['subscription_date'] = ""
+    st.session_state['intent'] = ""
+    st.session_state['sentence'] = ""
 
 def reset_related_session_var():
     st.session_state['not_enought_info_list'].clear()
@@ -186,7 +228,33 @@ def make_chat_for_enought_info():
 def chage_synonym(question):
     for idx, row in synonym_df.iterrows():
         question = re.sub("|".join(row.synonymList), row.title, question)
-    return question   
+    return question  
+
+def make_place_holder():
+    place_holder_str = "GPT인식 내용   ▷ "
+    
+    place_holder_str += "  [보험 상품명]  : "
+    if st.session_state['subscription_name'] == "":
+        place_holder_str += "  [      ]  "
+        
+    elif st.session_state['subscription_name'] != "":
+        place_holder_str += f"  \"{st.session_state['subscription_name']}\" ,  "
+
+    place_holder_str += "  [보험 가입일]  : "
+    if st.session_state['subscription_date'] == "":
+        place_holder_str += "  [      ]  "
+    elif st.session_state['subscription_date'] != "":        
+        place_holder_str += f"  \"{st.session_state['subscription_date']}\" ,  "
+
+    place_holder_str += "  [보험 관련 궁금한점]  : "
+    if st.session_state['sentence'] == "":
+        place_holder_str += "  [      ]  "
+    elif st.session_state['sentence'] != "":
+        place_holder_str += f"  \"{st.session_state['sentence']}\" "
+
+    place_holder_str += " ◁"
+
+    return place_holder_str
 
        
 llm_helper = LLMHelper()
@@ -204,9 +272,6 @@ if 'chat_history' not in st.session_state:
 
 if 'source_documents' not in st.session_state:
     st.session_state['source_documents'] = []
-
-if 'subscription_history' not in st.session_state:
-    st.session_state['subscription_history']  = []
 
 if 'not_enought_info_list' not in st.session_state:
     st.session_state['not_enought_info_list'] = []
@@ -303,19 +368,14 @@ if st.session_state['question'] and len(st.session_state['not_enought_info_list'
 
     result = intro + result + outro + candidate_info
 
-    st.session_state['chat_history'].append((question, result))
+    # 채팅 표시는 질문 full text 로 다시 치환
+    st.session_state['chat_history'].append((st.session_state['question'], result))
     st.session_state['source_documents'].append(sources)
     st.session_state['question'] = []
 
 elif len(st.session_state['not_enought_info_list']) > 0:
     st.session_state['chat_history'].append((st.session_state['question'], make_chat_for_enought_info()))
     st.session_state['question'] = []
-
-
-if st.session_state['subscription_history']:
-    for i in range(0, len(st.session_state['subscription_history']),1  ):
-        if st.session_state['subscription_history'][i][0] : message(st.session_state['subscription_history'][i][0], is_user=True, key='sub' +str(i) + '_user')
-        if st.session_state['subscription_history'][i][1] : message(st.session_state['subscription_history'][i][1], key= 'sub'+str(i))
     
 if st.session_state['chat_history']:
     for i in  range(0, len(st.session_state['chat_history']), 1):
@@ -324,6 +384,6 @@ if st.session_state['chat_history']:
 
  
 # Chat 
-st.text_input("You: ", placeholder="보험관련 질문을 해주세요(보험상품명과 가입날짜를 포함하면 좋습니다)", key="input", on_change=clear_text_input)
+st.text_input("▽ 질문을 입력해주세요 ▽", placeholder=make_place_holder(), key="input", on_change=clear_text_input)
 clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
     
