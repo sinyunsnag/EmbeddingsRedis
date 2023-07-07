@@ -44,6 +44,18 @@
                                 m = t.is_table,
                                 u = "logo_".concat(a).concat(".png"),
                                 b = e.props.theme;
+                            
+                            var chat_bg_color;
+                            var chat_border;
+                            if (a == true){
+                                chat_bg_color = "rgb(225, 225, 225)"
+                                chat_border = "2px solid rgb(180,180,180)"
+                            }
+                            else{
+                                chat_bg_color = "rgb(240, 255, 240)"
+                                chat_border = "2px solid rgb(144,238,144)"
+                            }
+
                             if (!b) return c.a.createElement("div", null, "Theme is undefined, please check streamlit version.");
                             var E = h.a.img({
                                     border: "1px solid transparent",
@@ -54,8 +66,8 @@
                                 }),
                                 k = h.a.div({
                                     display: "inline-block",
-                                    background: "b.secondaryBackgroundColor",
-                                    border: "1px solid transparent",
+                                    background: chat_bg_color,
+                                    border: chat_border,
                                     borderRadius: "10px",
                                     padding: "10px 14px",
                                     margin: "5px 20px",
