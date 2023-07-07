@@ -61,92 +61,110 @@ Follow the extraction guidelines defined below.
 Please read the examples below and answer the questions
 EXAMPLE
 Question: 나는 92년에 교보손실의료보험에 가입했어
-Answer: subscription_name : 교보손실의료보험, subscription_date : 1992, intent : none, sentence : none
+Answer: subscription_name : 교보손실의료보험| subscription_date : 1992| intent : none| sentence : none
 
 END OF EXAMPLE
 
 EXAMPLE
 Question: 나는 교보손실의료보험을 1992년 6월에 가입했어
-Answer: subscription_name : 교보손실의료보험 , subscription_date : 1992.06, intent : none, sentence : none
+Answer: subscription_name : 교보손실의료보험 | subscription_date : 1992.06| intent : none| sentence : none
 
 END OF EXAMPLE
 
 EXAMPLE
 Question: 안녕
-Answer: subscription_name : none , subscription_date : none, intent : none, sentence : none
+Answer: subscription_name : none | subscription_date : none| intent : none| sentence : none
 
 END OF EXAMPLE
 
 EXAMPLE
 Question: 종신보험에 가입했고 사망보험금이 얼마인지 알고 싶어
-Answer: subscription_name : 종신보험 , subscription_date : none, intent : insurance_related, sentence : 사망보험금이 얼마인지 알고 싶어
+Answer: subscription_name : 종신보험 | subscription_date : none| intent : insurance_related| sentence : 사망보험금이 얼마인지 알고 싶어
 
 END OF EXAMPLE
 
 
 EXAMPLE
 Question: 건강보험인데 20년에 가입했어 갱신형인지 궁금해
-Answer: subscription_name : 건강보험 , subscription_date : 2020, intent : insurance_related, sentence : 갱신형인지 궁금해
+Answer: subscription_name : 건강보험 | subscription_date : 2020| intent : insurance_related| sentence : 갱신형인지 궁금해
 
 END OF EXAMPLE
 
 EXAMPLE
 Question: 암수술특약의 보장금액 한도가 얼마야
-Answer: subscription_name : none , subscription_date : none, intent : insurance_related, sentence : 암수술특약의 보장금액 한도가 얼마야
+Answer: subscription_name : none | subscription_date : none| intent : insurance_related| sentence : 암수술특약의 보장금액 한도가 얼마야
 
 END OF EXAMPLE
 
 EXAMPLE
 Question: 감기에 걸렸는데 치료비가 나와? 실손보험에 가입했어
-Answer: subscription_name : 실손보험 , subscription_date : none, intent : insurance_related, sentence : 감기에 걸렸는데 치료비가 나와?
+Answer: subscription_name : 실손보험 | subscription_date : none| intent : insurance_related| sentence : 감기에 걸렸는데 치료비가 나와?
 
 END OF EXAMPLE
 
 EXAMPLE
 Question: 지금 많이 피곤하고 귀찮아 2021년에 가입했었어
-Answer: subscription_name : none , subscription_date : 2021, intent : none, sentence: none
+Answer: subscription_name : none | subscription_date : 2021| intent : none| sentence: none
 
 END OF EXAMPLE
 
 EXAMPLE
 Question: 암보험 주계약에서 말하는 기타피부암이 뭐야
-Answer: subscription_name : none , subscription_date : none, intent : insurance_related, sentence : 암보험 주계약에서 말하는 기타피부암이 뭐야
+Answer: subscription_name : none | subscription_date : none| intent : insurance_related| sentence : 암보험 주계약에서 말하는 기타피부암이 뭐야
 
 END OF EXAMPLE
 
 EXAMPLE
 Question: 99년 6월쯤에 가입했어 보험금이 얼마인지 궁금하네 종신보험이었을거야 아마
-Answer: subscription_name : 종신보험 , subscription_date : 1999.06, intent : insurance_related, sentence : 보험금이 얼마인지 궁금하네
+Answer: subscription_name : 종신보험 | subscription_date : 1999.06| intent : insurance_related| sentence : 보험금이 얼마인지 궁금하네
 
 END OF EXAMPLE
 
 EXAMPLE
 Question: 잘 모르겠어 보험 언제가입 했는지
-Answer: subscription_name : none , subscription_date : none, intent : none, sentence : none
+Answer: subscription_name : none | subscription_date : none| intent : none| sentence : none
 
 END OF EXAMPLE
 
 EXAMPLE
 Question: 19년도에 실속있는종신보험 가입했었어
-Answer: subscription_name : 실속있는종신보험 , subscription_date : 2019, intent : none, sentence : none
+Answer: subscription_name : 실속있는종신보험 | subscription_date : 2019| intent : none| sentence : none
 
 END OF EXAMPLE
 
 EXAMPLE
 Question: 치아보험을 3월에 가입했는데 보장내역을 좀 알고싶어
-Answer: subscription_name : 치아보험 , subscription_date : YYYY.03, intent : insurance_related, sentence : 보장내역을 좀 알고싶어
+Answer: subscription_name : 치아보험 | subscription_date : YYYY.03| intent : insurance_related| sentence : 보장내역을 좀 알고싶어
 
 END OF EXAMPLE
 
 EXAMPLE
 Question: 보장내역이 궁금해 보험은 작년 2월에 가입했어 
-Answer: subscription_name : none , subscription_date : XXXX.02, intent : insurance_related, sentence : 보장내역이 궁금해
+Answer: subscription_name : none | subscription_date : XXXX.02| intent : insurance_related| sentence : 보장내역이 궁금해
 
 END OF EXAMPLE
 
 EXAMPLE
 Question: 재작년7월 연금보험 가입했어 
-Answer: subscription_name : 연금보험 , subscription_date : ZZZZ.07, intent : none, sentence : none
+Answer: subscription_name : 연금보험 | subscription_date : ZZZZ.07| intent : none| sentence : none
+
+END OF EXAMPLE
+
+EXAMPLE
+Question: 17년에 가입했는데 암보장 내용 알려줘
+Answer: subscription_name : none | subscription_date : 2017| intent : insurance_related| sentence : 암보장 내용 알려줘
+
+END OF EXAMPLE
+
+EXAMPLE
+Question: 내가 재작년에 정기보험 가입했었어 특약의 지급사유를 알고 싶어
+Answer: subscription_name : 정기보험 | subscription_date : ZZZZ| intent : insurance_related| sentence : 특약의 지급사유를 알고 싶어
+
+END OF EXAMPLE
+
+EXAMPLE
+Question: 양성뇌종양진단보험금, 제자리암 진단보험금 지급금액 알려줘
+Answer: subscription_name : none | subscription_date : none| intent : insurance_related| sentence : 양성뇌종양진단보험금, 제자리암 진단보험금 지급금액 알려줘
 
 END OF EXAMPLE
 
