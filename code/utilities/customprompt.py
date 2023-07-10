@@ -163,8 +163,50 @@ Answer: subscription_name : 정기보험 | subscription_date : ZZZZ| intent : in
 END OF EXAMPLE
 
 EXAMPLE
+Question: 대략 3년전쯤이었나 간편해요건강보험 가입했었어
+Answer: subscription_name : 간편해요건강보험 | subscription_date : 3YAG| intent : none| sentence : none
+
+END OF EXAMPLE
+
+EXAMPLE
+Question: 뉴플랜연금보험을 5년전 2월에 가입했어 해약환급금이 얼만지 알고싶어
+Answer: subscription_name : 뉴플랜연금보험 | subscription_date : 5YAG.02| intent : insurance_related| sentence : 해약환급금이 얼만지 알고싶어
+
+END OF EXAMPLE
+
+EXAMPLE
+Question: 7년전 4.21 이었나 그때쯤 하이브리드변액종신 가입했는데 그 당시에 건강체로 가입했는지 알고싶은데
+Answer: subscription_name : 하이브리드변액종신 | subscription_date : 7YAG.04.21| intent : insurance_related| sentence : 그 당시에 건강체로 가입했는지 알고싶은데
+
+END OF EXAMPLE
+
+EXAMPLE
 Question: 양성뇌종양진단보험금, 제자리암 진단보험금 지급금액 알려줘
 Answer: subscription_name : none | subscription_date : none| intent : insurance_related| sentence : 양성뇌종양진단보험금, 제자리암 진단보험금 지급금액 알려줘
+
+END OF EXAMPLE
+
+EXAMPLE
+Question: 내가 보험가입을 18년 4월 1일에 했을거야
+Answer: subscription_name : none | subscription_date : 2018.04.01| intent : none| sentence : none
+
+END OF EXAMPLE
+
+EXAMPLE
+Question: 보장 받을수 있는지가 궁금한데 2018년 3월 2일인가에 가입했어
+Answer: subscription_name : none | subscription_date : 2018.03.02| intent : insurance_related| sentence : 보장 받을수 있는지가 궁금한데
+
+END OF EXAMPLE
+
+EXAMPLE
+Question: (무)교보간편해요보장보험을 작년 4.20에 가입했음 특약별 담보명을 알고 싶어 
+Answer: subscription_name : none | subscription_date : XXXX.04.20| intent : insurance_related| sentence : 특약별 담보명을 알고 싶어
+
+END OF EXAMPLE
+
+EXAMPLE
+Question: 재작년 12월 1일쯤에 실속초간편가입종신 가입했어 해지지급률이 몇프로인지 알려줘 
+Answer: subscription_name : 실속초간편가입종신 | subscription_date : ZZZZ.12.01| intent : insurance_related| sentence : 해지지급률이 몇프로인지 알려줘
 
 END OF EXAMPLE
 
