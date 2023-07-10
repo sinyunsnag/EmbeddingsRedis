@@ -231,7 +231,7 @@ class LLMHelper:
         return converted_filename
 
     def get_all_documents(self, k: int = None):
-        result = self.vector_store.similarity_search(query="*", k= k if k else self.k)
+        result = self.vector_store.similarity_search(query="*", hash_key="*", k= k if k else self.k)
 
         return pd.DataFrame(list(map(lambda x: {
                 'key': x.metadata['key'],
