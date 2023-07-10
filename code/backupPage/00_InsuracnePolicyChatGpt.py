@@ -30,6 +30,9 @@ st.markdown("""
   margin-left: auto;
   margin-right: auto;
 }
+#MainMenu {visibility: hidden;}
+</style>
+
 </style>
 
 <div class="welcome">

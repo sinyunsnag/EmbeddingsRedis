@@ -22,10 +22,11 @@ st.markdown("""
 }
 
 .introduction {
-
  font-family : "돋음"; 
   font-size: 15px;
 }
+#MainMenu {visibility: hidden;}
+
 </style>
 
 <div class="welcome">
@@ -80,3 +81,4 @@ if st.session_state['open_chat_history']:
 # Chat 
 st.text_input("You: ", placeholder="type your open_question", key="input", on_change=clear_text_input)
 clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
+
