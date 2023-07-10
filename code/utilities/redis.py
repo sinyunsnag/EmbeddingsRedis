@@ -141,7 +141,8 @@ class RedisExtended(Redis):
         metadata_key = "metadata"
         vector_key = "content_vector"
         insurance_key = "insurance"
-        date_key = "date"
+        start_date_key = "start_date"
+        end_date_key = "end_date"
 
         ids = []
         prefix = _redis_prefix(self.index_name)
@@ -153,7 +154,9 @@ class RedisExtended(Redis):
             key = keys[i] if keys else _redis_key(prefix)
             metadata = metadatas[i] if metadatas else {}
             insurance = metadata.get("insurance", "")
-            date = metadata.get("date", "")
+            
+            start_date = metadata.get("start_date", "")
+            end_date = metadata.get("end_date", "")
             
             embedding = embeddings[i] if embeddings else self.embedding_function(text)
             pipeline.hset(
@@ -161,7 +164,8 @@ class RedisExtended(Redis):
                 mapping={
                     content_key: text,
                     insurance_key: insurance,
-                    date_key: date,
+                    start_date_key: start_date,
+                    end_date_key: end_date,
                     vector_key: np.array(embedding, dtype=np.float32).tobytes(),
                     metadata_key: json.dumps(metadata),
                 },
@@ -258,6 +262,7 @@ class RedisExtended(Redis):
         self,
         insurance: str,
         date: str,
+        search_tags: str,
     ):
         # Write data to redis
         embed_insurance = self.embedding_function(insurance)
@@ -265,6 +270,7 @@ class RedisExtended(Redis):
         insurance_key = "insurance"
         date_key = "date"
         vector_key = "content_vector"
+        tags_key = "search_tags"
         insurance_hash_key = hashlib.sha1(insurance.encode('utf-8')).hexdigest()
 
         key = f"insurance:{insurance_hash_key}"
@@ -272,12 +278,12 @@ class RedisExtended(Redis):
         # 기존 date 가져오기.
         if self.client.hget(key, date_key):
             date_list = ast.literal_eval(self.client.hget(key, date_key).decode())
-            if int(date) not in date_list:
-                date_list.append(int(date))
+            if date not in date_list:
+                date_list.append(date)
                 date_list.sort()
             date = str(date_list)
         else:
-            date = "[" + date + "]"
+            date = "['" + date + "']"
 
         pipeline = self.client.pipeline(transaction=False)
 
@@ -287,6 +293,7 @@ class RedisExtended(Redis):
                 insurance_key: insurance,
                 date_key: date,
                 vector_key: np.array(embed_insurance, dtype=np.float32).tobytes(),
+                tags_key: search_tags,
             },
         )
 
@@ -297,6 +304,7 @@ class RedisExtended(Redis):
     def create_insurance_index(self, index_name="insurance-index", prefix = "insurance", distance_metric:str="COSINE"):
         insurance = TextField(name="insurance")
         date = TextField(name="date")
+        search_tags = TagField(name="search_tags")
         content_vector = VectorField("content_vector",
                     "HNSW", {
                         "TYPE": "FLOAT32",
@@ -307,7 +315,7 @@ class RedisExtended(Redis):
 
         # Create index
         self.client.ft(index_name).create_index(
-            fields = [insurance, date, content_vector],
+            fields = [insurance, date, search_tags, content_vector],
             definition = IndexDefinition(prefix=[prefix], index_type=IndexType.HASH)
         )
 
@@ -326,7 +334,7 @@ class RedisExtended(Redis):
     
     
     def similarity_search_with_score_insurance(
-        self, query: str, hash_key: str, index_name: str = "insurance-index", k: int = 4
+        self, query: str, hash_key: str, search_tags = [], index_name: str = "insurance-index", k: int = 4
     ) -> List[Tuple[str, float]]:
         """
         보험 명을 입력받았을 때, redis db 안에 있는 가장 유사한 보험명 리턴
@@ -346,7 +354,21 @@ class RedisExtended(Redis):
         # Prepare the Query
         return_fields = ["insurance", "date", "vector_score"]
         vector_field = "content_vector"
-        hybrid_fields = hash_key
+        if search_tags:
+            tags = "("
+            for tag in search_tags:
+                tags += "@search_tags:{" + tag + "}" 
+            tags += ")"
+
+            hybrid_fields = tags
+        else:
+            hybrid_fields = hash_key
+        # hybrid_fields = '*'
+        # hybrid_fields = "(@search_tags:{보장 암})"
+        # hybrid_fields = "(@search_tags:{보장} @search_tags:{암})"
+
+        print("zz >> HF :", hybrid_fields)
+
         base_query = (
             f"{hybrid_fields}=>[KNN {k} @{vector_field} $vector AS vector_score]"
         )
@@ -365,6 +387,7 @@ class RedisExtended(Redis):
 
         # perform vector search
         results = self.client.ft(index_name).search(redis_query, params_dict)
+        print(results.total)
         return results
 
 
@@ -410,7 +433,7 @@ class RedisExtended(Redis):
 
         # Creates embedding vector from user query
         embedding = self.embedding_function(query)
-        k = 1000
+
         # Prepare the Query
         return_fields = ["metadata", "content", "vector_score"]
         vector_field = "content_vector"
