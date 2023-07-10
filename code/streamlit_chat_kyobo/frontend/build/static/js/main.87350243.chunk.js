@@ -49,11 +49,11 @@
                             var chat_border;
                             if (a == true){
                                 chat_bg_color = "rgb(225, 225, 225)"
-                                chat_border = "1px solid rgb(180,180,180)"
+                                chat_border = "2px solid rgb(180,180,180)"
                             }
                             else{
                                 chat_bg_color = "rgb(240, 255, 240)"
-                                chat_border = "1px solid rgb(144,238,144)"
+                                chat_border = "2px solid rgb(144,238,144)"
                             }
 
                             if (!b) return c.a.createElement("div", null, "Theme is undefined, please check streamlit version.");
@@ -81,7 +81,7 @@
                                     margin: 0,
                                     width: "100%"
                                 }, (function(e) {
-                                    return e.isUser ? Object(f.a)(r || (r = Object(d.a)(["\n          flex-direction: row-reverse;\n          & > div {\n            text-align: right;\n          }\n        "]))) : Object(f.a)(n || (n = Object(d.a)([""])))
+                                    return e.isUser ? Object(f.a)(r || (r = Object(d.a)(["\n          flex-direction: row-reverse;\n          & > div {\n            text-align: right;\n          }        "]))) : Object(f.a)(n || (n = Object(d.a)([""])))
                                 })),
                                 S = [x.a, w.a],
                                 U = [j.a].concat(Object(s.a)(p ? [O.a] : []));

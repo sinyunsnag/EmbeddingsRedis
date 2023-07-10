@@ -18,7 +18,6 @@ st.markdown("""
   background-color: #f0fff0;  /* 박스 내부의 연한 녹색 */
   padding: 10px;
   border-radius: 5px; /* 박스 모서리 둥글게 */
-
 }
 
 .introduction {
@@ -30,10 +29,12 @@ st.markdown("""
 </style>
 
 <div class="welcome">
-    <p class="introduction">안녕하세요! <br>
+    안녕하세요! <br>
     교보생명 임직원 업무활용을 위한 교보GPT입니다. <br>
-    만나서 반갑습니다~☺ </p>
+    만나서 반갑습니다~☺ 
 </div>
+<br/>
+
 """, unsafe_allow_html=True)
 
 def clear_text_input():
@@ -81,4 +82,3 @@ if st.session_state['open_chat_history']:
 # Chat 
 st.text_input("You: ", placeholder="type your open_question", key="input", on_change=clear_text_input)
 clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
-
