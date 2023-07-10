@@ -30,6 +30,9 @@ st.markdown("""
   margin-left: auto;
   margin-right: auto;
 }
+#MainMenu {visibility: hidden;}
+</style>
+
 </style>
 
 <div class="welcome">
@@ -43,6 +46,7 @@ st.markdown("""
 </ol>
 </div>
 """, unsafe_allow_html=True)
+
 
 subscription_info = dict()
 
@@ -299,7 +303,8 @@ if 'sentence' not in st.session_state:
 if st.session_state['question'] and len(st.session_state['not_enought_info_list']) == 0:
 
     def get_hashkey_insurance_date(insurance_name, insurance_date):
-        similar_insurance = llm_helper.vector_store.similarity_search_with_score_insurance(insurance_name, "*", index_name="insurance-index", k=4)
+        #여기 tag 추출하는거
+        similar_insurance = llm_helper.vector_store.similarity_search_with_score_insurance(insurance_name, "*",search_tags="", index_name="insurance-index", k=4)
         best_insurance = similar_insurance.docs[0]
         
         date_list = [str(i) for i in ast.literal_eval(best_insurance.date)]
@@ -333,6 +338,9 @@ if st.session_state['question'] and len(st.session_state['not_enought_info_list'
     import hashlib
     
     hash_key, insurance_key, sell_date, candidate_date, candidate_insurance = get_hashkey_insurance_date(st.session_state['subscription_name'], st.session_state['subscription_date'])
+
+    def prerpocess_insurance(name):
+        name = name.replace("보험", "")
 
     def _sell_date(dates):
         from dateutil.parser import parse
@@ -376,6 +384,7 @@ if st.session_state['question'] and len(st.session_state['not_enought_info_list'
 elif len(st.session_state['not_enought_info_list']) > 0:
     st.session_state['chat_history'].append((st.session_state['question'], make_chat_for_enought_info()))
     st.session_state['question'] = []
+
     
 if st.session_state['chat_history']:
     for i in  range(0, len(st.session_state['chat_history']), 1):
