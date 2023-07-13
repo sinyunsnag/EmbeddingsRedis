@@ -131,10 +131,6 @@ class LLMHelper:
             self.vector_store_port: int= int(os.getenv('REDIS_PORT', 6379))
             self.vector_store_protocol: str = os.getenv("REDIS_PROTOCOL", "redis://")
             self.vector_store_password: str = os.getenv("REDIS_PASSWORD", None)
-            
-            # 로컬 세팅.
-            # self.vector_store_address: str = "localhost"
-            # self.vector_store_password: str = "redis-stack-password"
 
             if self.vector_store_password:
                 self.vector_store_full_address = f"{self.vector_store_protocol}:{self.vector_store_password}@{self.vector_store_address}:{self.vector_store_port}"
@@ -192,7 +188,7 @@ class LLMHelper:
             filename = "/".join(source_url.split('/')[4:])
             # converted/{filename}.pdf.txt 
             
-            # print("ZZZZZ", filename)
+            print("ZZZZZ", filename)
             insurance = urllib.parse.unquote(filename.split("/")[-1].split(".")[0].split("-")[0])
             start_date = urllib.parse.unquote(filename.split("/")[-1].split(".")[0].split("-")[1])
             end_date = urllib.parse.unquote(filename.split("/")[-1].split(".")[0].split("-")[2])
@@ -201,11 +197,6 @@ class LLMHelper:
             insurance_date_hash_key = hashlib.sha1(insurance_date.encode('utf-8')).hexdigest()
             # self.vector_store.add_insurance_info(insurance, date)
 
-            if self.vector_store.check_insurance_meta(insurance) is False:
-                print("메타데이터 저장안돼있음")
-                print("보험명 : ", insurance)
-                raise KeyError
-        
             keys = []
             for i, doc in enumerate(docs):
                 # hash_key = hashlib.sha1(f"{source_url}_{i}".encode('utf-8')).hexdigest()
