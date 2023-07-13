@@ -89,8 +89,8 @@ llm_helper = LLMHelper()
 # '교보장'이 아닌 '보장'만 
 
 # 22222222222222222 데이터 찾기
-insurance_name = "교보실손보험"
-dday = "20030901"
+insurance_name = "개인 연금보험"
+dday = "19970201"
 insurance_name = insurance_name.replace("보험", "")
 
 print(insurance_name)
@@ -111,7 +111,7 @@ exit()
 
 # 1111111111111 데이터 넣기
 
-data = pd.read_excel("GPT약관_검색태그.xlsx", sheet_name='Sheet1')
+data = pd.read_excel("보험정보_검색태그.xlsx", sheet_name='Sheet1')
 
 # 실제 데이터
 insurances = data['보험상품명'].tolist()
@@ -139,7 +139,6 @@ for i, d, t in zip(insurances, dates, tags):
     print(tag)
     print(d)
     llm_helper.vector_store.add_insurance_info(i, d, tag)
-    # break
 
-# insurance:6965af61cefaf53edbf2b76ccf8d4fae9b3d9fe3
-# ['20030801-20031231']
+
+

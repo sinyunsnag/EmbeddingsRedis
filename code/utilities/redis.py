@@ -319,34 +319,17 @@ class RedisExtended(Redis):
             definition = IndexDefinition(prefix=[prefix], index_type=IndexType.HASH)
         )
 
-    def check_insurance_meta(self, insurance):
-        insurance_hash_key = hashlib.sha1(insurance.encode('utf-8')).hexdigest()
-        key = f"insurance:{insurance_hash_key}"
-
-        if self.client.hget(key, "insurance"):
-            existed = self.client.hget(key, "insurance").decode()
-            if insurance == existed:
-                print("정상")
-                return True
-            else:
-                print("이상한값 저장돼있음")
-                return False
-        else:
-            print("메타데이터 존재하지 않음.")
-            return False
-
-    def get_insurance_info(self,key, prompt_index_name="insurance-index",number_of_results: int=3155):
+    def get_insurance_info(self, prompt_index_name="insurance-index", number_of_results: int=3155):
         base_query = f'*'
         return_fields = ['id','insurance','date','content_vector']
-        query = Query(key)
+        query = Query(base_query)
 
         results = self.client.ft(prompt_index_name).search(query)
         
-        print(results.total)
-        # if results.docs:
-        #     return pd.DataFrame(list(map(lambda x: {'id' : x.id, 'insurance': x.insurance, 'date': x.date, 'content_vector': x.content_vector}, results.docs))).sort_values(by='id')
-        # else:
-        #     return pd.DataFrame()
+        if results.docs:
+            return pd.DataFrame(list(map(lambda x: {'id' : x.id, 'insurance': x.insurance, 'date': x.date, 'content_vector': x.content_vector}, results.docs))).sort_values(by='id')
+        else:
+            return pd.DataFrame()
 
     
     
@@ -381,11 +364,11 @@ class RedisExtended(Redis):
         else:
             hybrid_fields = hash_key
         # hybrid_fields = '*'
-        # hybrid_fields = "(@search_tags:준호)"
-        # hybrid_fields = "(@search_tags:{보장})"
-        # hybrid_fields = "(@insurance:뭐지)"
-        # print("zz >> HF :", hybrid_fields)
-        # k=1000
+        # hybrid_fields = "(@search_tags:{보장 암})"
+        # hybrid_fields = "(@search_tags:{보장} @search_tags:{암})"
+
+        print("zz >> HF :", hybrid_fields)
+
         base_query = (
             f"{hybrid_fields}=>[KNN {k} @{vector_field} $vector AS vector_score]"
         )
