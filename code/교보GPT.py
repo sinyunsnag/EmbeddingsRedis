@@ -21,7 +21,7 @@ st.markdown("""
 }
 
 .introduction {
- font-family : "돋음"; 
+ font-family : "돋음";
   font-size: 15px;
 }
 #MainMenu {visibility: hidden;}
@@ -31,7 +31,7 @@ st.markdown("""
 <div class="welcome">
     안녕하세요! <br>
     교보생명 임직원 업무활용을 위한 교보GPT입니다. <br>
-    만나서 반갑습니다~☺ 
+    만나서 반갑습니다~☺
 </div>
 <br/>
 
@@ -43,8 +43,10 @@ def clear_text_input():
 
 def clear_chat_data():
     st.session_state['input'] = ""
-    st.session_state['source_documents'] = [] 
+    st.session_state['open_chat_history'] = [
 
+            {"role": "system", "content": "You are a helpful and kind Korea AI Assistant. You must reply only in Korean"},
+            ]
 
 # Initialize chat history
 if 'open_question' not in st.session_state:
@@ -60,6 +62,13 @@ bing = bing()
 
 # load synonym data
 
+clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
+
+st.session_state['input'] = st.chat_input(placeholder="type your open_question")
+if st.session_state['input']:
+    clear_text_input()
+
+#clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
 
 if st.session_state['open_question']:
  # 빙서치
@@ -69,7 +78,7 @@ if st.session_state['open_question']:
     st.session_state['open_chat_history'].append(result)
     # st.session_state['source_documents'].append(sources)
     st.session_state['open_question'] = []
-   
+
 
 if st.session_state['open_chat_history']:
     for i in range(1, len(st.session_state['open_chat_history'])):
@@ -79,6 +88,5 @@ if st.session_state['open_chat_history']:
             message(st.session_state['open_chat_history'][i]['content'], key=str(i)+'openGpt' )
       #  st.markdown(f'\n\nSources: {st.session_state["source_documents"][i]}')
 
-# Chat 
-st.text_input("You: ", placeholder="type your open_question", key="input", on_change=clear_text_input)
-clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
+
+#clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
