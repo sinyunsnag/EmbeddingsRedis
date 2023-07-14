@@ -4,6 +4,7 @@ from streamlit_chat_kyobo import message
 from utilities.openAI_helper import openAI_helper
 from utilities.bing_helper import bing
 import logging
+from openai.error import InvalidRequestError
 
 
 st.set_page_config(layout="wide")
@@ -31,7 +32,7 @@ st.markdown("""
 <div class="welcome">
     안녕하세요! <br>
     교보생명 임직원 업무활용을 위한 교보GPT입니다. <br>
-    만나서 반갑습니다~☺
+    만나서 반갑습니다~☺   베타버전으로 사용시 개선점은 이지모아에 요청부탁드립니다.
 </div>
 <br/>
 
@@ -71,22 +72,29 @@ if st.session_state['input']:
 #clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
 
 if st.session_state['open_question']:
- # 빙서치
-   # open_question, result = bing.bing_search(st.session_state['open_question'])
-    open_question, result = openAI_Helper.get_chatgpt_answer(st.session_state['open_question'], st.session_state['open_chat_history'])
-    st.session_state['open_chat_history'].append(open_question)
-    st.session_state['open_chat_history'].append(result)
-    # st.session_state['source_documents'].append(sources)
-    st.session_state['open_question'] = []
-
-
+    # 빙서치
+    # open_question, result = bing.bing_search(st.session_state['open_question'])
+    try :
+        open_question, result = openAI_Helper.get_chatgpt_answer(st.session_state['open_question'], st.session_state['open_chat_history'])
+        st.session_state['open_chat_history'].append(open_question)
+        st.session_state['open_chat_history'].append(result)
+            # st.session_state['source_documents'].append(sources)
+        st.session_state['open_question'] = []
+    except InvalidRequestError:
+        st.session_state['open_chat_history'] = [
+            {"role": "system", "content": "You are a helpful and kind Korea AI Assistant. You must reply only in Korean"},
+        ]
+        #st.session_state['open_chat_history'].append("openAI 응답 token 4096 초과로 대화이력을 삭제하였습니다 다시 질문해주세요 ")
+        message(st.session_state['open_question'], is_user=True )
+        message("openAI 응답 token 4096 초과로 대화이력을 삭제하였습니다 다시 질문해주세요 " )
+        
 if st.session_state['open_chat_history']:
     for i in range(1, len(st.session_state['open_chat_history'])):
         if st.session_state['open_chat_history'][i]['role'] == 'user':
             message(st.session_state['open_chat_history'][i]['content'], is_user=True, key=str(i) + 'openGpt_user')
         else:
             message(st.session_state['open_chat_history'][i]['content'], key=str(i)+'openGpt' )
-      #  st.markdown(f'\n\nSources: {st.session_state["source_documents"][i]}')
+        #  st.markdown(f'\n\nSources: {st.session_state["source_documents"][i]}')
 
 
 #clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
