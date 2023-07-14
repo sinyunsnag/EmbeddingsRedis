@@ -77,6 +77,7 @@
                                 _ = h.a.div({
                                     display: "flex",
                                     fontFamily: "".concat(b.font, ", 'Segoe UI', 'Roboto', sans-serif"),
+                                    color:"#000",
                                     height: "auto",
                                     margin: 0,
                                     width: "100%"
