@@ -11,6 +11,7 @@ st.set_page_config(layout="wide")
 st.markdown("""
 <style>
 .welcome {
+  color: black;
   display: block;
   margin-left: auto;
   margin-right: auto;
