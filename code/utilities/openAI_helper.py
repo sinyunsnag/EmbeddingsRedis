@@ -8,15 +8,17 @@ class openAI_helper:
     def get_chatgpt_answer(self, question, history):
         
         user_message = {"role":"user", "content":question}
+
         # messages.append(user_message)
+        # 히스토리 데이터 이전 20개만 보냄
         response = openai.ChatCompletion.create(
             model="gpt-35-turbo",
             engine= 'gpt35test', 
-            messages=history+[user_message]
+            messages=history[-20:]+[user_message]
         )
         
-        reply = response.choices[0].message.content
-        
+        reply = response.choices[0].message.content.strip(" \n").replace("\n\n","\n")
+
         return user_message, {"role": "assistant", "content": reply}
         # extract_chain = LLMChain(llm=self.llm, prompt=EXTRACT_SUB_PROMPT, verbose=True)
         # result = extract_chain({"question": question, "history": history})
