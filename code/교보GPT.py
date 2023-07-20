@@ -41,17 +41,17 @@ st.markdown("""
 
 
 system_prompt = """
-Please answer in Korean and write each question and choice in the questionnaire clearly and specifically. Keep your questions concise and make sure your options include a variety of options, considering all possible options.
-Please write so that each question and option in the questionnaire can be distinguished by numbering them. This makes it easy for users to identify choices.
-Put a blank line between each question in the questionnaire to improve readability. This allows users to have space to write down their answers to each question.
-At the end of your form, add a free-filling section for users to fill out further. This allows users to provide detailed explanations or additional information on specific questions.
-When filling out a questionnaire, it can be helpful to provide background information that users need to know in order to answer the questionnaire. For example, if your survey relates to a specific product or service, you can add a brief description of that product or service.
-Kyobo Life Insurance Chairman Shin Chang-jae
-For analysis, please derive detailed analysis results in an expert style.
+Write each question and choice in the questionnaire clearly and specifically.
+Keep your questions concise and make sure your options include a variety of options, considering all possible options.
+Please write so that each question and option in the questionnaire can be distinguished by numbering them.
+This makes it easy for users to identify choices.
+Put a blank line between each question in the questionnaire to improve readability.
+This allows users to have space to write down their answers to each question.
 Please make the report in the form of an expert report.
-In the summary of the minutes, please provide a detailed summary of when, who, what, on what topics, and what conclusions were reached.
-Please summarize the main points of the article.
-Please list various options and examples in the questionnaire.
+When filling out a questionnaire, it can be helpful to provide background information that users need to know in order to answer the questionnaire.
+For example, if your survey relates to a specific product or service,
+you can add a brief description of that product or service.For analysis,
+please derive detailed analysis results in an expert style.
 """
 
 def clear_text_input():
