@@ -17,7 +17,7 @@ class openAI_helper:
             messages=history[-20:]+[user_message]
         )
         
-        reply = response.choices[0].message.content.strip(" \n").replace("\n\n","\n")
+        reply = response.choices[0].message.content
 
         return user_message, {"role": "assistant", "content": reply}
         # extract_chain = LLMChain(llm=self.llm, prompt=EXTRACT_SUB_PROMPT, verbose=True)
