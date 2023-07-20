@@ -62,6 +62,7 @@
                                     borderRadius: "50%",
                                     height: "3rem",
                                     width: "3rem",
+                        
                                     margin: 0
                                 }),
                                 k = h.a.div({
@@ -69,17 +70,21 @@
                                     background: chat_bg_color,
                                     border: chat_border,
                                     borderRadius: "10px",
-                                    padding: "10px 14px",
+                                    padding: "5px 5px",
                                     margin: "5px 20px",
                                     maxWidth: "70%",
-                                    whiteSpace: m ? "normal" : "pre-line"
+                                    fontSize:"12px",
+                                    //whiteSpace: m ? "normal" : "pre-line"
+                                    
                                 }),
                                 _ = h.a.div({
                                     display: "flex",
-                                    fontFamily: "".concat(b.font, ", 'Segoe UI', 'Roboto', sans-serif"),
+                                    fontFamily: "Segoe UI",
                                     color:"#000",
                                     height: "auto",
+                                    fontSize:"20px",
                                     margin: 0,
+                    
                                     width: "100%"
                                 }, (function(e) {
                                     return e.isUser ? Object(f.a)(r || (r = Object(d.a)(["\n          flex-direction: row-reverse;\n          & > div {\n            text-align: right;\n          }        "]))) : Object(f.a)(n || (n = Object(d.a)([""])))

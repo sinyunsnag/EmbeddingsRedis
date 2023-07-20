@@ -39,6 +39,21 @@ st.markdown("""
 
 """, unsafe_allow_html=True)
 
+
+system_prompt = """
+Please answer in Korean and write each question and choice in the questionnaire clearly and specifically. Keep your questions concise and make sure your options include a variety of options, considering all possible options.
+Please write so that each question and option in the questionnaire can be distinguished by numbering them. This makes it easy for users to identify choices.
+Put a blank line between each question in the questionnaire to improve readability. This allows users to have space to write down their answers to each question.
+At the end of your form, add a free-filling section for users to fill out further. This allows users to provide detailed explanations or additional information on specific questions.
+When filling out a questionnaire, it can be helpful to provide background information that users need to know in order to answer the questionnaire. For example, if your survey relates to a specific product or service, you can add a brief description of that product or service.
+Kyobo Life Insurance Chairman Shin Chang-jae
+For analysis, please derive detailed analysis results in an expert style.
+Please make the report in the form of an expert report.
+In the summary of the minutes, please provide a detailed summary of when, who, what, on what topics, and what conclusions were reached.
+Please summarize the main points of the article.
+Please list various options and examples in the questionnaire.
+"""
+
 def clear_text_input():
     st.session_state['open_question'] = st.session_state['input']
     st.session_state['input'] = ""
@@ -47,7 +62,7 @@ def clear_chat_data():
     st.session_state['input'] = ""
     st.session_state['open_chat_history'] = [
 
-            {"role": "system", "content": "You are a helpful and kind Korea AI Assistant. You must reply only in Korean"},
+            {"role": "system", "content":  system_prompt },
             ]
 
 # Initialize chat history
@@ -55,7 +70,7 @@ if 'open_question' not in st.session_state:
     st.session_state['open_question'] = None
 if 'open_chat_history' not in st.session_state:
     st.session_state['open_chat_history'] = [
-            {"role": "system", "content": "You are a helpful and kind Korea AI Assistant. You must reply only in Korean"},
+            {"role": "system", "content": system_prompt},
         ]
 if 'source_documents' not in st.session_state:
     st.session_state['source_documents'] = []
@@ -77,17 +92,18 @@ if st.session_state['open_question']:
     # open_question, result = bing.bing_search(st.session_state['open_question'])
     try :
         open_question, result = openAI_Helper.get_chatgpt_answer(st.session_state['open_question'], st.session_state['open_chat_history'])
+
         st.session_state['open_chat_history'].append(open_question)
         st.session_state['open_chat_history'].append(result)
             # st.session_state['source_documents'].append(sources)
         st.session_state['open_question'] = []
     except InvalidRequestError:
         st.session_state['open_chat_history'] = [
-            {"role": "system", "content": "You are a helpful and kind Korea AI Assistant. You must reply only in Korean"},
+            {"role": "system", "content":  system_prompt},
         ]
         #st.session_state['open_chat_history'].append("openAI 응답 token 4096 초과로 대화이력을 삭제하였습니다 다시 질문해주세요 ")
         message(st.session_state['open_question'], is_user=True )
-        message("openAI 응답 token 4096 초과로 대화이력을 삭제하였습니다 다시 질문해주세요 " )
+        message("openAI 응답 token 16000 초과로 대화이력을 삭제하였습니다 다시 질문해주세요 " )
         
 if st.session_state['open_chat_history']:
     for i in range(1, len(st.session_state['open_chat_history'])):
