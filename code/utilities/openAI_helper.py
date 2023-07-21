@@ -14,7 +14,7 @@ class openAI_helper:
         response = openai.ChatCompletion.create(
             model="gpt-35-turbo",
             engine= 'gpt35test', 
-            messages=history[-20:]+[user_message]
+            messages=history[-12:]+[user_message]
         )
         
         reply = response.choices[0].message.content

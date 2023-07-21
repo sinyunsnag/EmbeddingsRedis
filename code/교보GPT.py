@@ -41,17 +41,13 @@ st.markdown("""
 
 
 system_prompt = """
-Write each question and choice in the questionnaire clearly and specifically.
-Keep your questions concise and make sure your options include a variety of options, considering all possible options.
-Please write so that each question and option in the questionnaire can be distinguished by numbering them.
-This makes it easy for users to identify choices.
-Put a blank line between each question in the questionnaire to improve readability.
-This allows users to have space to write down their answers to each question.
-Please make the report in the form of an expert report.
-When filling out a questionnaire, it can be helpful to provide background information that users need to know in order to answer the questionnaire.
-For example, if your survey relates to a specific product or service,
-you can add a brief description of that product or service.For analysis,
-please derive detailed analysis results in an expert style.
+Write your answer with specific and detailed examples.
+Please answer in as much detail as possible and consider many cases
+Give at least three examples and number each.
+Arrange the answers in order, number the same items, and line them up nicely.
+Please divide the items between the answers for readability.
+Please answer in the form of an expert.
+It may be helpful to find out the user's background when you answer.
 """
 
 def clear_text_input():
