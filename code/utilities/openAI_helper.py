@@ -9,31 +9,32 @@ from typing import Optional, TYPE_CHECKING
 
 class openAI_helper:
     LLMHelper = LLMHelper()
-    openaiNo = 1 if self.use_sub_AI_model else  random.randrange(1,3)
+    use_sub_AI_model = os.getenv("use_sub_model", False)
+    openaiNo = random.randrange(1,3) if use_sub_AI_model else   1
      
     if openaiNo == 1 :
         openai.api_base = os.getenv('OPENAI_API_BASE')
         openai.api_key = os.getenv("OPENAI_API_KEY")
-        self.api_version = openai.api_version
-        self.index_name: str = "embeddings"
-        self.model: str = os.getenv('OPENAI_EMBEDDINGS_ENGINE_DOC', "text-embedding-ada-002")
-        self.openAI_model = os.getenv('OPENAI_ENGINE_MODEL', "gpt-4-32k")
-        self.deployment_name: str = os.getenv("OPENAI_ENGINE", os.getenv("OPENAI_ENGINES", "text-davinci-003"))
-        self.deployment_type: str = os.getenv("OPENAI_DEPLOYMENT_TYPE", "Text")
-        self.temperature: float = float(os.getenv("OPENAI_TEMPERATURE", 0.7)) if temperature is None else temperature
-        self.max_tokens: int = int(os.getenv("OPENAI_MAX_TOKENS", -1)) if max_tokens is None else max_tokens
+        api_version = openai.api_version
+        index_name: str = "embeddings"
+        model: str = os.getenv('OPENAI_EMBEDDINGS_ENGINE_DOC', "text-embedding-ada-002")
+        openAI_model = os.getenv('OPENAI_ENGINE_MODEL', "gpt-4-32k")
+        deployment_name: str = os.getenv("OPENAI_ENGINE", os.getenv("OPENAI_ENGINES", "text-davinci-003"))
+        deployment_type: str = os.getenv("OPENAI_DEPLOYMENT_TYPE", "Text")
+        temperature: float = float(os.getenv("OPENAI_TEMPERATURE", 0.7)) 
+        max_tokens: int = int(os.getenv("OPENAI_MAX_TOKENS", -1)) 
   
     else  : 
         openai.api_base = os.getenv('OPENAI_API_BASE2')
         openai.api_version = openai.api_version
-        self.index_name: str = "embeddings"
-        self.model: str = os.getenv('OPENAI_EMBEDDINGS_ENGINE_DOC', "text-embedding-ada-002")
-        self.openAI_model = os.getenv('OPENAI_ENGINE_MODEL2', "gpt-4-32k")
-        self.deployment_name: str = os.getenv("OPENAI_ENGINE2", os.getenv("OPENAI_ENGINES2", "text-davinci-003"))
-        self.deployment_type: str = os.getenv("OPENAI_DEPLOYMENT_TYPE", "Text")
-        self.temperature: float = float(os.getenv("OPENAI_TEMPERATURE", 0.7)) if temperature is None else temperature
-        self.max_tokens: int = int(os.getenv("OPENAI_MAX_TOKENS", -1)) if max_tokens is None else max_tokens
-  
+        index_name: str = "embeddings"
+        model: str = os.getenv('OPENAI_EMBEDDINGS_ENGINE_DOC', "text-embedding-ada-002")
+        openAI_model = os.getenv('OPENAI_ENGINE_MODEL2', "gpt-4-32k")
+        deployment_name: str = os.getenv("OPENAI_ENGINE2", os.getenv("OPENAI_ENGINES2", "text-davinci-003"))
+        deployment_type: str = os.getenv("OPENAI_DEPLOYMENT_TYPE", "Text")
+        temperature: float = float(os.getenv("OPENAI_TEMPERATURE", 0.7)) 
+        max_tokens: int = int(os.getenv("OPENAI_MAX_TOKENS", -1)) 
+        
     def get_chatgpt_answer(self, question, history):
         
         user_message = {"role":"user", "content":question}
@@ -50,8 +51,6 @@ class openAI_helper:
         response = openai.ChatCompletion.create(
             model= self.openAI_model,
             engine= self.deployment_name, 
-            api_base=LLMHelper.deployment_name,
-            api_key= LLMHelper.openai.api_key,
             messages=history[-12:]+[user_message]
         )
         
