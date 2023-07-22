@@ -29,7 +29,7 @@ class openAI_helper:
     
         else :
             openai.api_base = os.getenv('OPENAI_API_BASE2')
-            openai.api_version = openai.api_version
+            openai.api_key = os.getenv("OPENAI_API_KEY2")
             self.index_name: str = "embeddings"
             self.model: str = os.getenv('OPENAI_EMBEDDINGS_ENGINE_DOC', "text-embedding-ada-002")
             self.openAI_model = os.getenv('OPENAI_ENGINE_MODEL2', "gpt-4-32k")
