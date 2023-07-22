@@ -3,15 +3,17 @@ import tiktoken
 from utilities.helper import LLMHelper
 import time
 import random
+import logging
 import os
 from contextvars import ContextVar
 from typing import Optional, TYPE_CHECKING
 
 class openAI_helper:
     LLMHelper = LLMHelper()
-    use_sub_AI_model = os.getenv("use_sub_model", False)
+    use_sub_AI_model = os.getenv("USE_SUB_MODEL", False)
     openaiNo = random.randrange(1,3) if use_sub_AI_model else   1
-     
+    logger = logging.getLogger()
+
     if openaiNo == 1 :
         openai.api_base = os.getenv('OPENAI_API_BASE')
         openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -24,7 +26,7 @@ class openAI_helper:
         temperature: float = float(os.getenv("OPENAI_TEMPERATURE", 0.7)) 
         max_tokens: int = int(os.getenv("OPENAI_MAX_TOKENS", -1)) 
   
-    else  : 
+    else :
         openai.api_base = os.getenv('OPENAI_API_BASE2')
         openai.api_version = openai.api_version
         index_name: str = "embeddings"
@@ -49,10 +51,13 @@ class openAI_helper:
     #    )
 
         response = openai.ChatCompletion.create(
-            model= self.openAI_model,
-            engine= self.deployment_name, 
+            model= openAI_model,
+            engine= deployment_name, 
             messages=history[-12:]+[user_message]
         )
+
+        logging.info(f"model,    : {self.openAI_model }")
+        logging.info(f"openai.api_base    : {openai.api_base }")
         
         reply = response.choices[0].message.content
 
