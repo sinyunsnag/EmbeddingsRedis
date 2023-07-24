@@ -6,8 +6,7 @@ from utilities.bing_helper import bing
 import logging
 from openai.error import InvalidRequestError
 from opencensus.ext.azure.log_exporter import AzureLogHandler
-logger = logging.getLogger(__name__)
-logger.addHandler(AzureLogHandler())
+
 
 st.set_page_config(layout="wide")
 st.markdown("""
@@ -112,9 +111,9 @@ if st.session_state['open_question']:
         #st.session_state['open_chat_history'].append("openAI 응답 token 4096 초과로 대화이력을 삭제하였습니다 다시 질문해주세요 ")
         message(st.session_state['open_question'], is_user=True )
         message("openAI 응답 token 16000 초과로 대화이력을 삭제하였습니다 다시 질문해주세요 " )
-        logger.error("quesiton: " + open_question + "\n error :" +e)
+        logger.error("quesiton: " + st.session_state['open_question'] + "\n error :" +e)
     except Exception as  e:
-        logger.error("quesiton: " + open_question + "\n error :" +e)
+        logger.error("quesiton: " + st.session_state['open_question'] + "\n error :" +e)
 
 if st.session_state['open_chat_history']:
     for i in range(1, len(st.session_state['open_chat_history'])):
