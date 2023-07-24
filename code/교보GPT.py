@@ -1,4 +1,5 @@
 import re
+import openai
 import streamlit as st
 from streamlit_chat_kyobo import message
 from utilities.openAI_helper import openAI_helper
@@ -93,6 +94,18 @@ if st.session_state['open_question']:
         st.session_state['open_chat_history'].append(result)
             # st.session_state['source_documents'].append(sources)
         st.session_state['open_question'] = []
+        
+        
+    except openai.error.APIError as e:
+        message("openAI 응답이 지연되고 있습니다. 잠시만 기다려주세요.")
+        print("ERRRRRRRRRR")
+        open_question, result = openAI_Helper.get_chatgpt_answer(st.session_state['open_question'], st.session_state['open_chat_history'])
+
+        st.session_state['open_chat_history'].append(open_question)
+        st.session_state['open_chat_history'].append(result)
+            # st.session_state['source_documents'].append(sources)
+        st.session_state['open_question'] = []
+
     except InvalidRequestError:
         st.session_state['open_chat_history'] = [
             {"role": "system", "content":  system_prompt},
