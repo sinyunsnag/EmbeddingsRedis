@@ -1,12 +1,13 @@
 import re
-import openai
 import streamlit as st
 from streamlit_chat_kyobo import message
 from utilities.openAI_helper import openAI_helper
 from utilities.bing_helper import bing
 import logging
 from openai.error import InvalidRequestError
-
+from opencensus.ext.azure.log_exporter import AzureLogHandler
+logger = logging.getLogger(__name__)
+logger.addHandler(AzureLogHandler())
 
 st.set_page_config(layout="wide")
 st.markdown("""
@@ -100,20 +101,21 @@ if st.session_state['open_question']:
         message("openAI 응답이 지연되고 있습니다. 잠시만 기다려주세요.")
         print("ERRRRRRRRRR")
         open_question, result = openAI_Helper.get_chatgpt_answer(st.session_state['open_question'], st.session_state['open_chat_history'])
-
         st.session_state['open_chat_history'].append(open_question)
         st.session_state['open_chat_history'].append(result)
             # st.session_state['source_documents'].append(sources)
         st.session_state['open_question'] = []
-
-    except InvalidRequestError:
+    except InvalidRequestError as e:
         st.session_state['open_chat_history'] = [
             {"role": "system", "content":  system_prompt},
         ]
         #st.session_state['open_chat_history'].append("openAI 응답 token 4096 초과로 대화이력을 삭제하였습니다 다시 질문해주세요 ")
         message(st.session_state['open_question'], is_user=True )
         message("openAI 응답 token 16000 초과로 대화이력을 삭제하였습니다 다시 질문해주세요 " )
-        
+        logger.error("quesiton: " + open_question + "\n error :" +e)
+    except Exception as  e:
+        logger.error("quesiton: " + open_question + "\n error :" +e)
+
 if st.session_state['open_chat_history']:
     for i in range(1, len(st.session_state['open_chat_history'])):
         if st.session_state['open_chat_history'][i]['role'] == 'user':
