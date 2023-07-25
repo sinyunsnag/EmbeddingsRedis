@@ -1,11 +1,13 @@
 import re
 import streamlit as st
+import openai
 from streamlit_chat_kyobo import message
 from utilities.openAI_helper import openAI_helper
 from utilities.bing_helper import bing
 import logging
 from openai.error import InvalidRequestError
 from opencensus.ext.azure.log_exporter import AzureLogHandler
+
 
 
 st.set_page_config(layout="wide")
@@ -89,13 +91,13 @@ if st.session_state['open_question']:
     # open_question, result = bing.bing_search(st.session_state['open_question'])
     try :
         open_question, result = openAI_Helper.get_chatgpt_answer(st.session_state['open_question'], st.session_state['open_chat_history'])
-
+        
         st.session_state['open_chat_history'].append(open_question)
         st.session_state['open_chat_history'].append(result)
             # st.session_state['source_documents'].append(sources)
         st.session_state['open_question'] = []
-        
-        
+        print("!insert chat history! :", open_question, "/ result: ", result )
+
     except openai.error.APIError as e:
         message("openAI 응답이 지연되고 있습니다. 잠시만 기다려주세요.")
         print("ERRRRRRRRRR")
@@ -111,9 +113,10 @@ if st.session_state['open_question']:
         #st.session_state['open_chat_history'].append("openAI 응답 token 4096 초과로 대화이력을 삭제하였습니다 다시 질문해주세요 ")
         message(st.session_state['open_question'], is_user=True )
         message("openAI 응답 token 16000 초과로 대화이력을 삭제하였습니다 다시 질문해주세요 " )
-        logger.error("quesiton: " + st.session_state['open_question'] + "\n error :" +e)
+        print("quesiton: " , st.session_state['open_question'] , "\n error :" ,e)
+        loggin.info("quesiton: " , st.session_state['open_question'] , "\n error :" ,e)
     except Exception as  e:
-        logger.error("quesiton: " + st.session_state['open_question'] + "\n error :" +e)
+        print("quesiton: " , st.session_state['open_question'] , "\n error :" ,e)
 
 if st.session_state['open_chat_history']:
     for i in range(1, len(st.session_state['open_chat_history'])):
@@ -122,6 +125,6 @@ if st.session_state['open_chat_history']:
         else:
             message(st.session_state['open_chat_history'][i]['content'], key=str(i)+'openGpt' )
         #  st.markdown(f'\n\nSources: {st.session_state["source_documents"][i]}')
-
+       
 
 #clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
