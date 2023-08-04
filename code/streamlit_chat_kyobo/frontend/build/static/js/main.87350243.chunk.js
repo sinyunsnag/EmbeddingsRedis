@@ -101,7 +101,8 @@
                                 remarkPlugins: S,
                                 rehypePlugins: [].concat(Object(s.a)(U), [
                                     [y.a, {
-                                        detect: !0
+                                        detect: !0,
+                                        ignoreMissing:true
                                     }]
                                 ])
                             }, l)))
